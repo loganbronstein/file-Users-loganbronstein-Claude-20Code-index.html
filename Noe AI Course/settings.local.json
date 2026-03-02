@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open \"https://noeai.circle.so/c/claude-code-course#lesson-3450388\")",
+      "Bash(open \"https://noeai.circle.so/c/claude-code-course#lesson-3450390\")",
+      "Bash(sips -s format jpeg \"/Users/loganbronstein/Library/Messages/Attachments/89/09/57A47E36-F4E5-46AF-8715-B51933A7349B/IMG_1406.HEIC\" --out /tmp/listing_item.jpg -Z 1024 2>&1)",
+      "WebSearch",
+      "Bash(open \"https://noeai.circle.so/c/claude-code-course#lesson-3450391\")",
+      "WebFetch(domain:chicago.craigslist.org)",
+      "WebFetch(domain:www.ebay.com)",
+      "Bash(open \"https://noeai.circle.so/c/claude-code-course#lesson-3450392\")"
+    ]
+  }
+}
