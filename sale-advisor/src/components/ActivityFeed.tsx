@@ -1,32 +1,36 @@
-const activities = [
-  {
-    color: "var(--green)",
-    text: <><strong>Rachel Kim</strong> was paid <strong>$1,847</strong> — 8 items sold via Facebook Marketplace</>,
-    time: "1 hour ago",
-  },
-  {
-    color: "var(--blue)",
-    text: <><strong>Mid-century dresser</strong> listed on eBay for <strong>$450</strong> — Sarah Mitchell&apos;s collection</>,
-    time: "2 hours ago",
-  },
-  {
-    color: "var(--accent)",
-    text: <><strong>Maria Gonzalez</strong> — new lead from Facebook Ad &ldquo;Lazy Person&apos;s Garage Sale&rdquo; campaign</>,
-    time: "3 hours ago",
-  },
-  {
-    color: "var(--yellow)",
-    text: <><strong>Lakeshore crew</strong> referred <strong>Carol Williams</strong> from an Evanston junk removal job</>,
-    time: "5 hours ago",
-  },
-  {
-    color: "var(--green)",
-    text: <><strong>Vintage Schwinn bike</strong> sold for <strong>$280</strong> on Craigslist — Anthony Russo&apos;s listing</>,
-    time: "Yesterday",
-  },
-];
+interface Activity {
+  type: string;
+  text: string;
+  time: string;
+  color: string;
+}
 
-export default function ActivityFeed() {
+function timeAgo(date: string) {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return "Yesterday";
+  return `${days}d ago`;
+}
+
+export default function ActivityFeed({ activities }: { activities: Activity[] }) {
+  if (activities.length === 0) {
+    return (
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title">Activity Feed</div>
+        </div>
+        <div style={{ padding: 32, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+          No activity yet — create your first lead to get started
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card">
       <div className="card-header">
@@ -39,7 +43,7 @@ export default function ActivityFeed() {
             <div className="activity-dot" style={{ background: a.color }} />
             <div>
               <div className="activity-text">{a.text}</div>
-              <div className="activity-time">{a.time}</div>
+              <div className="activity-time">{timeAgo(a.time)}</div>
             </div>
           </div>
         ))}

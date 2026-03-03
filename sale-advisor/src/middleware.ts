@@ -16,11 +16,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect to login if not authenticated
-  if (!token) {
-    const loginUrl = new URL("/login", req.url);
-    return NextResponse.redirect(loginUrl);
-  }
+  // TODO: Re-enable auth once Supabase is connected
+  // if (!token) {
+  //   const loginUrl = new URL("/login", req.url);
+  //   return NextResponse.redirect(loginUrl);
+  // }
 
   return NextResponse.next();
 }

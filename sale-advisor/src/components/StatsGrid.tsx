@@ -1,34 +1,42 @@
-export default function StatsGrid() {
+interface StatsData {
+  activeClients: number;
+  totalLeads: number;
+  itemsListed: number;
+  revenueCents: number;
+  payoutCents: number;
+}
+
+function fmt(cents: number) {
+  return "$" + (cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0 });
+}
+
+export default function StatsGrid({ data }: { data: StatsData }) {
   const stats = [
     {
       label: "Active Clients",
-      value: "47",
-      change: "↑ 12 this week",
-      up: true,
+      value: String(data.activeClients),
+      change: `${data.totalLeads} total leads`,
       icon: "👥",
       iconBg: "var(--accent-glow)",
     },
     {
       label: "Items Listed",
-      value: "183",
-      change: "↑ 34 this week",
-      up: true,
+      value: String(data.itemsListed),
+      change: "across all marketplaces",
       icon: "📦",
       iconBg: "var(--green-bg)",
     },
     {
-      label: "Revenue (This Month)",
-      value: "$12,480",
-      change: "↑ 23% vs last month",
-      up: true,
+      label: "Revenue (Commission)",
+      value: fmt(data.revenueCents),
+      change: "total earned",
       icon: "💰",
       iconBg: "var(--yellow-bg)",
     },
     {
       label: "Client Payouts",
-      value: "$38,200",
-      change: "↑ Happy clients = referrals",
-      up: true,
+      value: fmt(data.payoutCents),
+      change: "paid to clients",
       icon: "🤝",
       iconBg: "var(--orange-bg)",
     },
@@ -45,9 +53,7 @@ export default function StatsGrid() {
             </div>
           </div>
           <div className="stat-value">{stat.value}</div>
-          <div className={`stat-change ${stat.up ? "up" : "down"}`}>
-            {stat.change}
-          </div>
+          <div className="stat-change up">{stat.change}</div>
         </div>
       ))}
     </div>

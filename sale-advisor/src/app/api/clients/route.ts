@@ -1,21 +1,42 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const clients = await prisma.lead.findMany({
-    where: {
-      stage: { in: ["WALKTHROUGH_BOOKED", "LISTING_ACTIVE", "SOLD_PAID"] },
-    },
-    orderBy: { updatedAt: "desc" },
+  const clients = await prisma.client.findMany({
+    where: { archivedAt: null },
+    orderBy: { createdAt: "desc" },
     include: {
-      _count: { select: { messages: true, deliveries: true } },
+      lead: { select: { source: true } },
+      _count: { select: { inventory: true, messages: true, deliveries: true, payouts: true } },
     },
   });
 
   return NextResponse.json(clients);
+}
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { leadId } = body;
+
+  if (!leadId) return NextResponse.json({ error: "leadId is required" }, { status: 400 });
+
+  const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+  if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+
+  const client = await prisma.client.create({
+    data: {
+      leadId,
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      neighborhood: lead.neighborhood,
+    },
+  });
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: { stage: "WALKTHROUGH_BOOKED", convertedAt: new Date() },
+  });
+
+  return NextResponse.json(client, { status: 201 });
 }

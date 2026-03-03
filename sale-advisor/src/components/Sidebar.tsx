@@ -5,35 +5,42 @@ import { usePathname } from "next/navigation";
 
 const navItems = {
   Main: [
-    { icon: "📊", label: "Dashboard", href: "/", badge: null },
-    { icon: "👥", label: "Clients", href: "/clients", badge: "47" },
-    { icon: "💬", label: "Messages", href: "/messages", badge: "12" },
-    { icon: "📦", label: "Listings", href: "/listings", badge: null },
+    { icon: "📊", label: "Dashboard", href: "/" },
+    { icon: "👥", label: "Clients", href: "/clients" },
+    { icon: "💬", label: "Messages", href: "/messages" },
+    { icon: "📦", label: "Listings", href: "/listings" },
   ],
   Marketing: [
-    { icon: "📢", label: "Ad Campaigns", href: "/campaigns", badge: null },
-    { icon: "📈", label: "Analytics", href: "/analytics", badge: null },
-    { icon: "🔗", label: "Lead Sources", href: "/sources", badge: null },
+    { icon: "📢", label: "Ad Campaigns", href: "/campaigns" },
+    { icon: "📈", label: "Analytics", href: "/analytics" },
+    { icon: "🔗", label: "Lead Sources", href: "/sources" },
   ],
   Operations: [
-    { icon: "📅", label: "Walkthroughs", href: "/walkthroughs", badge: null },
-    { icon: "🚚", label: "Deliveries", href: "/deliveries", badge: null },
-    { icon: "💰", label: "Payouts", href: "/payouts", badge: null },
+    { icon: "📅", label: "Walkthroughs", href: "/walkthroughs" },
+    { icon: "🚚", label: "Deliveries", href: "/deliveries" },
+    { icon: "💰", label: "Payouts", href: "/payouts" },
   ],
 };
 
 export default function Sidebar() {
   const pathname = usePathname();
 
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  }
+
   return (
     <aside className="sidebar">
       <div className="logo">
-        <div className="logo-icon">SA</div>
-        <div>
-          <div className="logo-text">
-            Sale <span>Advisor</span>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+          <div className="logo-icon">SA</div>
+          <div>
+            <div className="logo-text">
+              Sale <span>Advisor</span>
+            </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       <nav>
@@ -44,11 +51,10 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`nav-item${pathname === item.href ? " active" : ""}`}
+                className={`nav-item${isActive(item.href) ? " active" : ""}`}
               >
                 <span className="icon">{item.icon}</span>
                 {item.label}
-                {item.badge && <span className="nav-badge">{item.badge}</span>}
               </Link>
             ))}
           </div>

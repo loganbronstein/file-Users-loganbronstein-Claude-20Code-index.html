@@ -1,24 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const stage = searchParams.get("stage");
+  const source = searchParams.get("source");
 
   const leads = await prisma.lead.findMany({
+    where: {
+      archivedAt: null,
+      ...(stage ? { stage: stage as never } : {}),
+      ...(source ? { source: source as never } : {}),
+    },
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { messages: true } } },
+    include: {
+      _count: { select: { messages: true } },
+      client: { select: { id: true } },
+    },
   });
 
   return NextResponse.json(leads);
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const body = await req.json();
   const { name, email, phone, source, neighborhood, itemsDescription, estimatedValue } = body;
 

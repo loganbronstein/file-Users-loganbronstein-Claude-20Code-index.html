@@ -1,42 +1,65 @@
-const deliveries = [
-  {
-    icon: "🚛", iconBg: "var(--yellow-bg)",
-    route: "Mid-Century Dresser + Bookshelf → Jake Morrison",
-    details: "Sarah Mitchell's items · Gold Coast → Andersonville · 2-man crew",
-    status: "In Transit", statusCls: "in-transit",
-    time: "ETA 2:30 PM", progress: 65, progressColor: "var(--yellow)",
-  },
-  {
-    icon: "📦", iconBg: "var(--purple-bg)",
-    route: "Pickup: 12 items → Tom & Lisa Park",
-    details: "Logan Square · Walkthrough completed · Ready for pickup",
-    status: "Pickup", statusCls: "pickup",
-    time: "Tomorrow 10 AM", progress: 20, progressColor: "var(--purple)",
-  },
-  {
-    icon: "🗓️", iconBg: "var(--blue-bg)",
-    route: "Vintage Speakers + Turntable → Olivia Sanders",
-    details: "Mike Reeves' items · Pilsen → Wicker Park · 1-man crew",
-    status: "Scheduled", statusCls: "scheduled",
-    time: "Mar 3 · 1:00 PM", progress: 10, progressColor: "var(--blue)",
-  },
-  {
-    icon: "🗓️", iconBg: "var(--blue-bg)",
-    route: "Leather Sectional + Coffee Table → Marcus Webb",
-    details: "Rachel Kim's items · Hyde Park → South Loop · 2-man crew",
-    status: "Scheduled", statusCls: "scheduled",
-    time: "Mar 4 · 11:00 AM", progress: 10, progressColor: "var(--blue)",
-  },
-  {
-    icon: "✅", iconBg: "var(--green-bg)",
-    route: "Peloton Bike → Daniel Torres",
-    details: "David Okafor's items · Lakeview → Lincoln Park · 1-man crew",
-    status: "Delivered ✓", statusCls: "delivered",
-    time: "Today · 11:15 AM", progress: 100, progressColor: "var(--green)",
-  },
-];
+"use client";
 
-export default function DeliveryTracker() {
+import { useRouter } from "next/navigation";
+
+interface Delivery {
+  id: string;
+  description: string;
+  fromAddress: string;
+  toAddress: string;
+  status: string;
+  crewSize: number;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  client: { name: string };
+}
+
+const statusConfig: Record<string, { icon: string; iconBg: string; cls: string; progress: number; progressColor: string }> = {
+  SCHEDULED: { icon: "🗓️", iconBg: "var(--blue-bg)", cls: "scheduled", progress: 10, progressColor: "var(--blue)" },
+  PICKUP: { icon: "📦", iconBg: "var(--purple-bg)", cls: "pickup", progress: 25, progressColor: "var(--purple)" },
+  IN_TRANSIT: { icon: "🚛", iconBg: "var(--yellow-bg)", cls: "in-transit", progress: 65, progressColor: "var(--yellow)" },
+  DELIVERED: { icon: "✅", iconBg: "var(--green-bg)", cls: "delivered", progress: 100, progressColor: "var(--green)" },
+  CANCELLED: { icon: "❌", iconBg: "var(--red-bg)", cls: "scheduled", progress: 0, progressColor: "var(--red)" },
+};
+
+const statusLabels: Record<string, string> = {
+  SCHEDULED: "Scheduled",
+  PICKUP: "Pickup",
+  IN_TRANSIT: "In Transit",
+  DELIVERED: "Delivered ✓",
+  CANCELLED: "Cancelled",
+};
+
+function fmtDate(d: string | null) {
+  if (!d) return "TBD";
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+export default function DeliveryTracker({ deliveries }: { deliveries: Delivery[] }) {
+  const router = useRouter();
+
+  async function updateStatus(id: string, status: string) {
+    await fetch(`/api/deliveries/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    router.refresh();
+  }
+
+  if (deliveries.length === 0) {
+    return (
+      <div className="card" style={{ marginBottom: 32 }}>
+        <div className="card-header">
+          <div className="card-title">🚚 Lakeshore Hauling — Delivery Tracker</div>
+        </div>
+        <div style={{ padding: 32, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+          No deliveries scheduled
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card" style={{ marginBottom: 32 }}>
       <div className="card-header">
@@ -44,22 +67,39 @@ export default function DeliveryTracker() {
         <div className="card-action">Schedule Delivery →</div>
       </div>
       <div className="delivery-grid">
-        {deliveries.map((d) => (
-          <div className="delivery-item" key={d.route}>
-            <div className="delivery-icon" style={{ background: d.iconBg }}>{d.icon}</div>
-            <div className="delivery-info">
-              <div className="delivery-route">{d.route}</div>
-              <div className="delivery-details">{d.details}</div>
-              <div className="delivery-progress-bar">
-                <div className="delivery-progress-fill" style={{ width: `${d.progress}%`, background: d.progressColor }} />
+        {deliveries.map((d) => {
+          const cfg = statusConfig[d.status] || statusConfig.SCHEDULED;
+          return (
+            <div className="delivery-item" key={d.id}>
+              <div className="delivery-icon" style={{ background: cfg.iconBg }}>{cfg.icon}</div>
+              <div className="delivery-info">
+                <div className="delivery-route">{d.description}</div>
+                <div className="delivery-details">
+                  {d.client.name} · {d.fromAddress} → {d.toAddress} · {d.crewSize}-man crew
+                </div>
+                <div className="delivery-progress-bar">
+                  <div className="delivery-progress-fill" style={{ width: `${cfg.progress}%`, background: cfg.progressColor }} />
+                </div>
+              </div>
+              <div className="delivery-right">
+                <select
+                  style={{
+                    fontSize: 11, fontWeight: 700, padding: "4px 8px", borderRadius: 20,
+                    background: cfg.iconBg, color: cfg.progressColor, border: "none", cursor: "pointer",
+                    marginBottom: 6,
+                  }}
+                  value={d.status}
+                  onChange={(e) => updateStatus(d.id, e.target.value)}
+                >
+                  {Object.entries(statusLabels).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+                <div className="delivery-time">{fmtDate(d.scheduledAt)}</div>
               </div>
             </div>
-            <div className="delivery-right">
-              <div className={`delivery-status ${d.statusCls}`}>{d.status}</div>
-              <div className="delivery-time">{d.time}</div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
