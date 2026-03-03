@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export async function POST() {
@@ -8,27 +7,21 @@ export async function POST() {
     return NextResponse.json({ error: "Not allowed in production" }, { status: 403 });
   }
 
-  const existing = await prisma.user.findUnique({
-    where: { email: "logan@saleadvisor.com" },
-  });
+  // Upsert the two allowlisted admin users
+  const users = [
+    { email: "loganbronstein@saleadvisor.com", name: "Logan Bronstein" },
+    { email: "kellerwestman@saleadvisor.com", name: "Keller Westman" },
+  ];
 
-  if (existing) {
-    return NextResponse.json({ message: "Admin user already exists" });
+  const created = [];
+  for (const u of users) {
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      create: { email: u.email, name: u.name, role: "ADMIN" },
+      update: { name: u.name, role: "ADMIN" },
+    });
+    created.push(user.email);
   }
 
-  const hashedPassword = await bcrypt.hash("saleadvisor2026", 10);
-
-  const user = await prisma.user.create({
-    data: {
-      email: "logan@saleadvisor.com",
-      password: hashedPassword,
-      name: "Logan Bronstein",
-      role: "admin",
-    },
-  });
-
-  return NextResponse.json({
-    message: "Admin user created",
-    email: user.email,
-  });
+  return NextResponse.json({ message: "Admin users ready", emails: created });
 }
