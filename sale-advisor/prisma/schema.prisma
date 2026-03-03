@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LeadSource {
+  FACEBOOK
+  INSTAGRAM
+  GOOGLE
+  NEXTDOOR
+  TIKTOK
+  REFERRAL
+  LAKESHORE
+  WEBSITE
+  OTHER
+}
+
+enum LeadStage {
+  NEW_LEAD
+  CONTACTED
+  WALKTHROUGH_BOOKED
+  LISTING_ACTIVE
+  SOLD_PAID
+  LOST
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum DeliveryStatus {
+  SCHEDULED
+  PICKUP
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+model Lead {
+  id               String           @id @default(cuid())
+  name             String
+  email            String?
+  phone            String?
+  source           LeadSource       @default(OTHER)
+  stage            LeadStage        @default(NEW_LEAD)
+  neighborhood     String?
+  itemsDescription String?
+  estimatedValue   Float?
+  utmSource        String?
+  utmMedium        String?
+  utmCampaign      String?
+  consentGiven     Boolean          @default(false)
+  consentAt        DateTime?
+  convertedAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  messages         Message[]
+  deliveries       Delivery[]
+
+  @@index([stage])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model Message {
+  id        String           @id @default(cuid())
+  content   String
+  direction MessageDirection
+  read      Boolean          @default(false)
+  leadId    String
+  lead      Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@index([leadId])
+  @@index([createdAt])
+}
+
+model Delivery {
+  id          String         @id @default(cuid())
+  description String
+  fromAddress String
+  toAddress   String
+  status      DeliveryStatus @default(SCHEDULED)
+  crewSize    Int            @default(1)
+  scheduledAt DateTime?
+  completedAt DateTime?
+  cost        Float?
+  revenue     Float?
+  leadId      String?
+  lead        Lead?          @relation(fields: [leadId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+}
