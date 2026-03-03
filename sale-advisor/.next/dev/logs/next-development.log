@@ -1,0 +1,224 @@
+[00:20:56.964] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/client/components/builtin/global-not-found'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:20:57.021] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:20:57.143] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:20:57.191] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:20:57.401] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/client/components/builtin/global-not-found'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:20:57.479] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:20:57.562] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:20:57.595] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:27:38.315] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/client/components/builtin/global-not-found'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:27:38.333] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:27:38.378] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[00:27:38.391] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:20:43.290] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/client/components/builtin/global-not-found'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:20:43.460] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:20:43.594] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:20:43.607] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:22:50.413] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/client/components/builtin/global-not-found'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:22:50.509] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:22:50.616] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:22:50.627] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:14.482] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/client/components/builtin/global-not-found'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:14.512] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:14.612] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:14.665] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:19.644] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/client/components/builtin/global-not-found'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:19.683] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:19.767] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:19.781] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:42.591] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/client/components/builtin/global-not-found'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:42.611] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:42.681] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js
+[11:23:42.697] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/router-server.js
+- /Users/loganbronstein/Claude Code/sale-advisor/node_modules/next/dist/server/lib/start-server.js

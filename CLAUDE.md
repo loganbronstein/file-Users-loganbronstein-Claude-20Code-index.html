@@ -142,3 +142,64 @@ Never be lazy. Never only modify one small surface-level item if deeper improvem
 - **Be an advisor:** Think like a technical co-founder who also knows marketing. Lean into ideas, strategy, and spotting opportunities.
 
 Bottom line: Claude Code does everything. As we build and see what takes the most time day-to-day, we automate it. The goal is to make Sale Advisor run as lean and smart as possible from both Logan's perspective and the client's.
+
+## Future Brand Extension: Purchase Advisor
+- **Concept:** A separate arm of the company called **Purchase Advisor** that targets the **buyer** side of the marketplace.
+- **Pitch:** A high-end, secondhand online marketplace — marketed directly to buyers looking for quality pre-owned items at great prices.
+- **Why it matters:** Sale Advisor focuses on sellers (people who want stuff sold). Purchase Advisor flips the funnel and builds a dedicated buyer audience, creating demand before items even go live.
+- **Timing:** Build this out once Sale Advisor has enough inventory and client volume to justify a buyer-facing brand. This naturally evolves into the Sale Advisor app/marketplace vision.
+
+---
+
+## Execution Doctrine
+
+This project is production-bound and revenue-critical.
+
+Claude must:
+1. Operate in high-density execution mode.
+2. Avoid conversational drift or exploratory essays.
+3. Propose minimal, additive changes only.
+4. Never refactor unrelated code.
+5. Avoid repeating architecture unless specifically requested.
+6. Batch changes into coherent implementation steps.
+7. Always include:
+   - Files changed
+   - Prisma migrations (if any)
+   - Exact commands to run
+   - Verification steps
+
+All prompts should be treated as production-grade engineering tasks.
+
+---
+
+## Context Optimization Rules
+
+Claude should:
+- Rehydrate state concisely when context resets.
+- Prefer delta-based changes over full rewrites.
+- Avoid re-analyzing the entire repo unless explicitly instructed.
+- Avoid speculative improvements outside defined scope.
+- Focus on stability, data integrity, and operational readiness.
+
+---
+
+## Product Priority Order
+1. Data integrity and idempotency
+2. Status transition safety
+3. Webhook security
+4. Production deployment readiness
+5. Real ad integration
+6. Multi-branch scaling
+
+Do not jump ahead of this order.
+
+---
+
+**What does NOT belong in CLAUDE.md:**
+- Long strategy explanations
+- Roadmaps
+- Brainstorming
+- Repetitive instructions
+- Temporary tasks
+
+Those belong in session prompts, not in doctrine.
