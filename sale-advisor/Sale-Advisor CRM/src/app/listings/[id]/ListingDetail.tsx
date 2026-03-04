@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import MarketplacePostSection from "@/components/listings/MarketplacePostSection";
+import MarkSoldModal from "@/components/listings/MarkSoldModal";
 
 type ListingEvent = {
   id: string;
@@ -10,6 +12,17 @@ type ListingEvent = {
   fromStatus: string | null;
   toStatus: string | null;
   detail: string | null;
+  createdAt: string;
+};
+
+type MarketplacePost = {
+  id: string;
+  marketplace: string;
+  status: string;
+  externalUrl: string | null;
+  formattedTitle: string | null;
+  formattedDescription: string | null;
+  postedAt: string | null;
   createdAt: string;
 };
 
@@ -29,6 +42,9 @@ type Listing = {
   soldAt: string | null;
   buyerName: string | null;
   buyerContact: string | null;
+  deliveryStatus: string | null;
+  payoutStatus: string | null;
+  clientId: string | null;
   createdAt: string;
   updatedAt: string;
   client: { id: string; name: string } | null;
@@ -38,6 +54,13 @@ type Listing = {
 const ALL_MARKETPLACES = ["facebook", "ebay", "craigslist", "offerup"] as const;
 const CATEGORIES = ["Furniture", "Electronics", "Appliances", "Clothing", "Sports", "Tools", "Home Decor", "Kitchen", "Outdoor", "Toys", "Books", "Art", "Jewelry", "Collectibles", "Other"];
 const CONDITIONS = ["New", "Like New", "Good", "Fair", "Poor"];
+
+const MARKETPLACE_LABELS: Record<string, string> = {
+  facebook: "Facebook Marketplace",
+  ebay: "eBay",
+  craigslist: "Craigslist",
+  offerup: "OfferUp",
+};
 
 const statusColors: Record<string, { color: string; bg: string; label: string }> = {
   DRAFT:              { color: "var(--yellow)",  bg: "var(--yellow-bg)",       label: "Draft" },
@@ -81,10 +104,30 @@ export default function ListingDetail({ listing: initial }: { listing: Listing }
     listing.marketplaces.length > 0 ? [...listing.marketplaces] : [...ALL_MARKETPLACES],
   );
 
+  // Marketplace posts state
+  const [marketplacePosts, setMarketplacePosts] = useState<MarketplacePost[]>([]);
+
+  // Sold modal state
+  const [showSoldModal, setShowSoldModal] = useState(false);
+
   const sc = statusColors[listing.status] || statusColors.DRAFT;
   const canEdit = ["DRAFT", "NEEDS_REVIEW"].includes(listing.status);
   const canApprove = ["DRAFT", "NEEDS_REVIEW"].includes(listing.status) && listing.priceCents > 0 && listing.title !== "SMS Photo — Pending AI Review";
   const canReject = ["NEEDS_REVIEW", "APPROVED"].includes(listing.status);
+  const canMarkSold = listing.status === "POSTED";
+  const showMarketplacePosts = ["POSTING", "POSTED", "SOLD", "DELIVERY_SCHEDULED", "PAID_OUT"].includes(listing.status);
+
+  // Load marketplace posts when listing is in posting/posted+ status
+  useEffect(() => {
+    if (showMarketplacePosts) {
+      fetch(`/api/listings/${listing.id}/marketplace-posts`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.ok) setMarketplacePosts(data.posts);
+        })
+        .catch(() => {});
+    }
+  }, [listing.id, showMarketplacePosts]);
 
   // ── Save edits ─────────────────────────────────────────
   async function handleSave() {
@@ -161,6 +204,9 @@ export default function ListingDetail({ listing: initial }: { listing: Listing }
       const data = await res.json();
       if (data.ok) {
         setListing((prev) => ({ ...prev, status: data.listing.status, marketplaces: data.listing.marketplaces }));
+        if (data.marketplacePosts) {
+          setMarketplacePosts(data.marketplacePosts);
+        }
       } else {
         alert(data.errors?.join(", ") || "Approval failed");
       }
@@ -269,6 +315,13 @@ export default function ListingDetail({ listing: initial }: { listing: Listing }
               Approve & Post
             </button>
           )}
+          {canMarkSold && (
+            <button onClick={() => setShowSoldModal(true)} disabled={loading} style={{
+              ...btnPrimary, background: "var(--accent)",
+            }}>
+              Mark as Sold
+            </button>
+          )}
           {listing.status === "DRAFT" && (
             <button onClick={handleDelete} disabled={loading} style={{ ...btnSecondary, color: "var(--red)", borderColor: "var(--red)" }}>
               Delete
@@ -318,6 +371,22 @@ export default function ListingDetail({ listing: initial }: { listing: Listing }
             }}>
               No photos
             </div>
+          )}
+
+          {/* ── Marketplace Posts Section ────────────────── */}
+          {showMarketplacePosts && marketplacePosts.length > 0 && (
+            <MarketplacePostSection
+              listingId={listing.id}
+              posts={marketplacePosts}
+              onPostUpdated={(updatedPost) => {
+                setMarketplacePosts((prev) =>
+                  prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)),
+                );
+              }}
+              onAllPosted={() => {
+                setListing((prev) => ({ ...prev, status: "POSTED", postedAt: new Date().toISOString() }));
+              }}
+            />
           )}
 
           {/* ── Status History ─────────────────────────────── */}
@@ -477,7 +546,7 @@ export default function ListingDetail({ listing: initial }: { listing: Listing }
                           background: "var(--bg-hover)", color: "var(--text-secondary)",
                           textTransform: "capitalize",
                         }}>
-                          {mp}
+                          {MARKETPLACE_LABELS[mp] || mp}
                         </span>
                       ))}
                     </div>
@@ -485,13 +554,94 @@ export default function ListingDetail({ listing: initial }: { listing: Listing }
                 )}
 
                 {/* Buyer info (if sold) */}
-                {listing.buyerName && (
-                  <div>
-                    <div style={metaLabel}>Buyer</div>
-                    <div style={metaValue}>
-                      {listing.buyerName}
-                      {listing.buyerContact && <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>{listing.buyerContact}</span>}
+                {listing.status === "SOLD" || listing.status === "DELIVERY_SCHEDULED" || listing.status === "PAID_OUT" ? (
+                  <div style={{
+                    padding: 14, borderRadius: 8, background: "var(--green-bg)",
+                    border: "1px solid var(--green)",
+                  }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--green)", marginBottom: 10 }}>
+                      Sale Info
                     </div>
+                    <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                      {listing.buyerName && (
+                        <div>
+                          <div style={metaLabel}>Buyer</div>
+                          <div style={metaValue}>{listing.buyerName}</div>
+                        </div>
+                      )}
+                      {listing.buyerContact && (
+                        <div>
+                          <div style={metaLabel}>Contact</div>
+                          <div style={metaValue}>{listing.buyerContact}</div>
+                        </div>
+                      )}
+                      {listing.soldAt && (
+                        <div>
+                          <div style={metaLabel}>Sold Date</div>
+                          <div style={metaValue}>{fmtDate(listing.soldAt)}</div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quick action links */}
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                      {listing.client && (
+                        <Link
+                          href={`/deliveries?clientId=${listing.client.id}`}
+                          style={{
+                            padding: "6px 12px", borderRadius: 6, fontSize: 12,
+                            background: "var(--bg-card)", border: "1px solid var(--border)",
+                            color: "var(--text-secondary)", textDecoration: "none",
+                          }}
+                        >
+                          Schedule Delivery
+                        </Link>
+                      )}
+                      {listing.client && (
+                        <Link
+                          href={`/payouts?clientId=${listing.client.id}`}
+                          style={{
+                            padding: "6px 12px", borderRadius: 6, fontSize: 12,
+                            background: "var(--bg-card)", border: "1px solid var(--border)",
+                            color: "var(--text-secondary)", textDecoration: "none",
+                          }}
+                        >
+                          Create Payout
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Delivery + Payout status (when tracking) */}
+                {(listing.deliveryStatus || listing.payoutStatus) && (
+                  <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                    {listing.deliveryStatus && (
+                      <div>
+                        <div style={metaLabel}>Delivery</div>
+                        <span style={{
+                          padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 500,
+                          background: listing.deliveryStatus === "delivered" ? "var(--green-bg)" : "var(--blue-bg)",
+                          color: listing.deliveryStatus === "delivered" ? "var(--green)" : "var(--blue)",
+                          textTransform: "capitalize",
+                        }}>
+                          {listing.deliveryStatus}
+                        </span>
+                      </div>
+                    )}
+                    {listing.payoutStatus && (
+                      <div>
+                        <div style={metaLabel}>Payout</div>
+                        <span style={{
+                          padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 500,
+                          background: listing.payoutStatus === "paid" ? "var(--green-bg)" : "var(--yellow-bg)",
+                          color: listing.payoutStatus === "paid" ? "var(--green)" : "var(--yellow)",
+                          textTransform: "capitalize",
+                        }}>
+                          {listing.payoutStatus}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -537,13 +687,13 @@ export default function ListingDetail({ listing: initial }: { listing: Listing }
                       )}
                       style={{
                         padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500,
-                        cursor: "pointer", textTransform: "capitalize",
+                        cursor: "pointer",
                         border: selected ? "2px solid var(--accent)" : "1px solid var(--border)",
                         background: selected ? "var(--accent-glow)" : "var(--bg-hover)",
                         color: selected ? "var(--accent)" : "var(--text-muted)",
                       }}
                     >
-                      {mp}
+                      {MARKETPLACE_LABELS[mp] || mp}
                     </button>
                   );
                 })}
@@ -568,6 +718,24 @@ export default function ListingDetail({ listing: initial }: { listing: Listing }
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Sold Modal ──────────────────────────────────── */}
+      {showSoldModal && (
+        <MarkSoldModal
+          listingId={listing.id}
+          listingTitle={listing.title}
+          priceCents={listing.priceCents}
+          marketplaces={listing.marketplaces}
+          clientId={listing.clientId}
+          onClose={() => setShowSoldModal(false)}
+          onSold={(data) => {
+            setListing((prev) => ({
+              ...prev,
+              ...data,
+            }));
+          }}
+        />
       )}
     </>
   );

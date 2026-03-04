@@ -2,19 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guard";
 import { validationError } from "@/lib/validation";
-import { postToMarketplaces } from "@/services/marketplace";
+import { generateMarketplaceContent } from "@/services/marketplace";
+import { createMarketplacePost } from "@/services/marketplace/db";
 import { logStatusTransition, logListingEvent } from "@/lib/listing-events";
 
 type Params = { params: Promise<{ id: string }> };
 
 /**
- * POST /api/listings/[id]/approve — Approve a listing and trigger marketplace posting
+ * POST /api/listings/[id]/approve — Approve a listing and create marketplace post records
  *
  * Body (optional):
- *   { marketplaces?: string[] }   — which marketplaces to post to
+ *   { marketplaces?: string[] }
  *
- * Transitions: DRAFT/NEEDS_REVIEW → APPROVED → POSTING → POSTED
- * Stores per-marketplace results in a ListingEvent metadata JSON.
+ * Flow: DRAFT/NEEDS_REVIEW → APPROVED → POSTING
+ * Creates MarketplacePost records with pre-formatted content for each marketplace.
+ * Listing stays in POSTING until all marketplace posts are manually marked as POSTED.
  */
 export async function POST(req: NextRequest, { params }: Params) {
   const auth = await requireAuth();
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     clientId: listing.clientId,
   });
 
-  // Step 2: POSTING
+  // Step 2: POSTING — listing waits for manual marketplace posting
   await prisma.listing.update({
     where: { id },
     data: { status: "POSTING" },
@@ -82,8 +84,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     clientId: listing.clientId,
   });
 
-  // Step 3: Post to marketplace adapters
-  const results = await postToMarketplaces(
+  // Step 3: Generate marketplace-ready content
+  const contentList = generateMarketplaceContent(
     {
       id: listing.id,
       title: listing.title,
@@ -96,44 +98,33 @@ export async function POST(req: NextRequest, { params }: Params) {
     selectedMarketplaces,
   );
 
-  // Step 4: POSTED if all succeeded
-  const allSuccess = results.every((r) => r.success);
-  let finalStatus = "POSTING";
+  // Step 4: Create MarketplacePost records
+  const marketplacePosts = await Promise.all(
+    contentList.map((content) =>
+      createMarketplacePost({
+        listingId: id,
+        marketplace: content.marketplace,
+        status: "PENDING",
+        formattedTitle: content.formattedTitle,
+        formattedDescription: content.formattedDescription,
+      }),
+    ),
+  );
 
-  if (allSuccess) {
-    await prisma.listing.update({
-      where: { id },
-      data: { status: "POSTED", postedAt: new Date() },
-    });
-    finalStatus = "POSTED";
-    await logStatusTransition({
-      listingId: id,
-      fromStatus: "POSTING",
-      toStatus: "POSTED",
-      title: listing.title,
-      clientId: listing.clientId,
-    });
-  }
-
-  // Log marketplace results with per-marketplace detail
+  // Log the approve event
   await logListingEvent({
     listingId: id,
-    action: "marketplace.posted",
-    detail: `Posted to: ${selectedMarketplaces.join(", ")}`,
+    action: "marketplace.approved",
+    detail: `Approved for: ${selectedMarketplaces.join(", ")}. Ready for manual posting.`,
     metadata: {
       marketplaces: selectedMarketplaces,
-      results: results.map((r) => ({
-        marketplace: r.marketplace,
-        success: r.success,
-        externalId: r.externalId || null,
-        error: r.error || null,
-      })),
+      postIds: marketplacePosts.map((p: { id: string }) => p.id),
     },
   });
 
   return NextResponse.json({
     ok: true,
-    listing: { ...listing, status: finalStatus, marketplaces: selectedMarketplaces },
-    marketplaceResults: results,
+    listing: { ...listing, status: "POSTING", marketplaces: selectedMarketplaces },
+    marketplacePosts,
   });
 }
