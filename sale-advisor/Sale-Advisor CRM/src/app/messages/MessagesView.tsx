@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useToast } from "@/components/Toast";
+import QuickReplyDropdown from "@/components/messages/QuickReplyDropdown";
 
 interface ConversationPreview {
   id: string;
@@ -50,6 +53,21 @@ function formatPhone(e164: string): string {
   return `(${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`;
 }
 
+function formatDateSeparator(date: Date): string {
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) return "Today";
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
 const avatarColors = [
   "linear-gradient(135deg, #6366f1, #a855f7)",
   "linear-gradient(135deg, #f97316, #ef4444)",
@@ -58,6 +76,14 @@ const avatarColors = [
   "linear-gradient(135deg, #ec4899, #a855f7)",
 ];
 
+function statusIcon(status: string | null): string {
+  if (!status) return "";
+  if (status === "delivered") return "\u2713\u2713";
+  if (status === "sent" || status === "queued") return "\u2713";
+  if (status === "failed") return "\u2717";
+  return "";
+}
+
 export default function MessagesView({ conversations }: { conversations: ConversationPreview[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(conversations[0]?.id || null);
   const [threadMessages, setThreadMessages] = useState<MessageItem[]>([]);
@@ -65,8 +91,19 @@ export default function MessagesView({ conversations }: { conversations: Convers
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
+  const { toast } = useToast();
+
+  // Auto-resize textarea
+  const autoResize = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
+  }, []);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -83,7 +120,12 @@ export default function MessagesView({ conversations }: { conversations: Convers
         setThreadMessages([]);
         setLoading(false);
       });
-  }, [selectedId]);
+
+    // Explicitly mark as read
+    fetch(`/api/conversations/${selectedId}/read`, { method: "PATCH" })
+      .then(() => router.refresh())
+      .catch(() => {});
+  }, [selectedId, router]);
 
   // Poll for new messages every 5 seconds
   useEffect(() => {
@@ -109,8 +151,23 @@ export default function MessagesView({ conversations }: { conversations: Convers
 
   const selected = conversations.find((c) => c.id === selectedId) || null;
 
+  // Filter conversations by search
+  const filteredConversations = searchQuery.trim()
+    ? conversations.filter((conv) => {
+        const q = searchQuery.toLowerCase();
+        const name = (conv.lead?.name || conv.client?.name || "").toLowerCase();
+        const phone = formatPhone(conv.phoneE164).toLowerCase();
+        const rawPhone = conv.phoneE164.toLowerCase();
+        return name.includes(q) || phone.includes(q) || rawPhone.includes(q);
+      })
+    : conversations;
+
   async function handleSend() {
     if (!draft.trim() || !selectedId) return;
+    if (draft.length > 1600) {
+      toast("Message exceeds 1600 character SMS limit", "error");
+      return;
+    }
     setSending(true);
     setSendError(null);
 
@@ -128,13 +185,14 @@ export default function MessagesView({ conversations }: { conversations: Convers
 
       if (!res.ok) {
         setSendError(data.error || "Failed to send");
-        // Still add the message to the thread if it was saved
         if (data.message) {
           setThreadMessages((prev) => [...prev, data.message]);
         }
       } else {
         setThreadMessages((prev) => [...prev, data]);
         setDraft("");
+        if (textareaRef.current) textareaRef.current.style.height = "auto";
+        toast("Message sent");
       }
 
       router.refresh();
@@ -156,14 +214,20 @@ export default function MessagesView({ conversations }: { conversations: Convers
     }
     if (conv.lead) parts.push(conv.lead.source.toLowerCase().replace("_", " "));
     if (conv.client) parts.push("client");
-    return parts.join(" · ");
+    return parts.join(" \u00b7 ");
+  }
+
+  function getProfileLink(conv: ConversationPreview): string | null {
+    if (conv.client) return `/clients/${conv.client.id}`;
+    if (conv.lead) return `/leads/${conv.lead.id}`;
+    return null;
   }
 
   if (conversations.length === 0) {
     return (
       <div className="card">
         <div style={{ padding: 48, textAlign: "center", color: "var(--text-muted)" }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>💬</div>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>{"\uD83D\uDCAC"}</div>
           <div style={{ fontSize: 15, marginBottom: 8 }}>No conversations yet</div>
           <div style={{ fontSize: 13 }}>
             Conversations appear when you create a lead with a phone number or receive an inbound SMS.
@@ -180,64 +244,82 @@ export default function MessagesView({ conversations }: { conversations: Convers
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", fontSize: 12, color: "var(--text-muted)" }}>
           {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
         </div>
-        <div style={{ flex: 1, overflowY: "auto" }}>
-          {conversations.map((conv, i) => {
-            const name = getDisplayName(conv);
-            const preview = conv.messages[0]?.content || "No messages";
-            const unread = conv._count.messages;
-            const isSelected = conv.id === selectedId;
 
-            return (
-              <div
-                key={conv.id}
-                onClick={() => setSelectedId(conv.id)}
-                style={{
-                  padding: "14px 16px",
-                  cursor: "pointer",
-                  display: "flex",
-                  gap: 12,
-                  alignItems: "center",
-                  background: isSelected ? "var(--bg-hover)" : "transparent",
-                  borderLeft: isSelected ? "3px solid var(--accent)" : "3px solid transparent",
-                  transition: "background 0.15s",
-                }}
-              >
-                <div style={{
-                  width: 40, height: 40, borderRadius: "50%", display: "flex",
-                  alignItems: "center", justifyContent: "center", fontSize: 13,
-                  fontWeight: 600, color: "white", flexShrink: 0,
-                  background: avatarColors[i % avatarColors.length],
-                }}>
-                  {initials(name)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 13, fontWeight: unread > 0 ? 700 : 500, color: "var(--text-primary)" }}>
-                      {name}
-                    </span>
-                    <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>
-                      {timeAgo(conv.lastMessageAt)}
-                    </span>
-                  </div>
+        {/* Search bar */}
+        <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border)" }}>
+          <input
+            className="form-input"
+            placeholder="Search by name or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ fontSize: 12, padding: "6px 10px" }}
+          />
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {filteredConversations.length === 0 ? (
+            <div style={{ padding: 24, textAlign: "center", color: "var(--text-muted)", fontSize: 12 }}>
+              No conversations match your search
+            </div>
+          ) : (
+            filteredConversations.map((conv, i) => {
+              const name = getDisplayName(conv);
+              const preview = conv.messages[0]?.content || "No messages";
+              const unread = conv._count.messages;
+              const isSelected = conv.id === selectedId;
+
+              return (
+                <div
+                  key={conv.id}
+                  onClick={() => setSelectedId(conv.id)}
+                  style={{
+                    padding: "14px 16px",
+                    cursor: "pointer",
+                    display: "flex",
+                    gap: 12,
+                    alignItems: "center",
+                    background: isSelected ? "var(--bg-hover)" : "transparent",
+                    borderLeft: isSelected ? "3px solid var(--accent)" : "3px solid transparent",
+                    transition: "background 0.15s",
+                  }}
+                >
                   <div style={{
-                    fontSize: 12, color: "var(--text-muted)", marginTop: 2,
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    width: 40, height: 40, borderRadius: "50%", display: "flex",
+                    alignItems: "center", justifyContent: "center", fontSize: 13,
+                    fontWeight: 600, color: "white", flexShrink: 0,
+                    background: avatarColors[i % avatarColors.length],
                   }}>
-                    {preview.length > 50 ? preview.slice(0, 47) + "..." : preview}
+                    {initials(name)}
                   </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: 13, fontWeight: unread > 0 ? 700 : 500, color: "var(--text-primary)" }}>
+                        {name}
+                      </span>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>
+                        {timeAgo(conv.lastMessageAt)}
+                      </span>
+                    </div>
+                    <div style={{
+                      fontSize: 12, color: "var(--text-muted)", marginTop: 2,
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>
+                      {preview.length > 50 ? preview.slice(0, 47) + "..." : preview}
+                    </div>
+                  </div>
+                  {unread > 0 && (
+                    <div style={{
+                      width: 20, height: 20, borderRadius: "50%", background: "var(--accent)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 10, fontWeight: 700, color: "white", flexShrink: 0,
+                    }}>
+                      {unread}
+                    </div>
+                  )}
                 </div>
-                {unread > 0 && (
-                  <div style={{
-                    width: 20, height: 20, borderRadius: "50%", background: "var(--accent)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 700, color: "white", flexShrink: 0,
-                  }}>
-                    {unread}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -251,21 +333,59 @@ export default function MessagesView({ conversations }: { conversations: Convers
               display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
-                  {getDisplayName(selected)}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {(() => {
+                    const link = getProfileLink(selected);
+                    const displayName = getDisplayName(selected);
+                    return link ? (
+                      <Link href={link} style={{ fontSize: 15, fontWeight: 600, color: "var(--accent-light)", textDecoration: "none" }}>
+                        {displayName}
+                      </Link>
+                    ) : (
+                      <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
+                        {displayName}
+                      </span>
+                    );
+                  })()}
+                  {selected.client && (
+                    <span style={{
+                      fontSize: 10, padding: "2px 6px", borderRadius: 4,
+                      background: "var(--green-bg)", color: "var(--green)",
+                    }}>
+                      Client
+                    </span>
+                  )}
+                  {selected.lead && !selected.client && (
+                    <span style={{
+                      fontSize: 10, padding: "2px 6px", borderRadius: 4,
+                      background: "var(--blue-bg)", color: "var(--blue)",
+                    }}>
+                      Lead
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
                   {getSubtext(selected)}
                 </div>
               </div>
-              {selected.lead && (
-                <span style={{
-                  fontSize: 11, padding: "3px 8px", borderRadius: 6,
-                  background: "var(--accent-glow)", color: "var(--accent-light)",
-                }}>
-                  {selected.lead.stage.replace(/_/g, " ").toLowerCase()}
-                </span>
-              )}
+              <div style={{ display: "flex", gap: 6 }}>
+                {selected.lead && (
+                  <span style={{
+                    fontSize: 11, padding: "3px 8px", borderRadius: 6,
+                    background: "var(--accent-glow)", color: "var(--accent-light)",
+                  }}>
+                    {selected.lead.stage.replace(/_/g, " ").toLowerCase()}
+                  </span>
+                )}
+                {selected.client && (
+                  <span style={{
+                    fontSize: 11, padding: "3px 8px", borderRadius: 6,
+                    background: "var(--green-bg)", color: "var(--green)",
+                  }}>
+                    {selected.client.stage.replace(/_/g, " ").toLowerCase()}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Messages */}
@@ -282,43 +402,66 @@ export default function MessagesView({ conversations }: { conversations: Convers
                   No messages yet. Send the first text below.
                 </div>
               ) : (
-                threadMessages.map((msg) => (
-                  <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: msg.direction === "OUTBOUND" ? "flex-end" : "flex-start" }}>
-                    <div
-                      style={{
-                        padding: "10px 14px",
-                        borderRadius: msg.direction === "OUTBOUND" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                        fontSize: 13,
-                        maxWidth: "75%",
-                        background: msg.direction === "OUTBOUND" ? "var(--accent)" : "var(--bg-secondary)",
-                        color: msg.direction === "OUTBOUND" ? "white" : "var(--text-primary)",
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      {msg.content}
-                    </div>
-                    <div style={{
-                      fontSize: 10, marginTop: 3, display: "flex", gap: 6, alignItems: "center",
-                      color: "var(--text-muted)",
-                    }}>
-                      <span>
-                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                      {msg.direction === "OUTBOUND" && msg.status && (
-                        <span style={{
-                          color: msg.status === "failed" ? "var(--red)" : "var(--text-muted)",
+                threadMessages.map((msg, idx) => {
+                  const msgDate = new Date(msg.createdAt);
+                  const prevDate = idx > 0 ? new Date(threadMessages[idx - 1].createdAt) : null;
+                  const showDateSep = !prevDate || !isSameDay(msgDate, prevDate);
+
+                  return (
+                    <div key={msg.id}>
+                      {showDateSep && (
+                        <div style={{
+                          textAlign: "center", fontSize: 11, color: "var(--text-muted)",
+                          padding: "8px 0", margin: idx > 0 ? "8px 0" : "0 0 8px 0",
                         }}>
-                          {msg.status === "failed" ? "failed" : msg.status === "delivered" ? "delivered" : "sent"}
-                        </span>
+                          <span style={{
+                            background: "var(--bg-secondary)", padding: "3px 10px",
+                            borderRadius: 10,
+                          }}>
+                            {formatDateSeparator(msgDate)}
+                          </span>
+                        </div>
                       )}
-                      {msg.error && (
-                        <span style={{ color: "var(--red)", fontSize: 10 }}>
-                          {msg.error}
-                        </span>
-                      )}
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: msg.direction === "OUTBOUND" ? "flex-end" : "flex-start" }}>
+                        <div
+                          style={{
+                            padding: "10px 14px",
+                            borderRadius: msg.direction === "OUTBOUND" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                            fontSize: 13,
+                            maxWidth: "75%",
+                            background: msg.direction === "OUTBOUND" ? "var(--accent)" : "var(--bg-secondary)",
+                            color: msg.direction === "OUTBOUND" ? "white" : "var(--text-primary)",
+                            lineHeight: 1.45,
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
+                          {msg.content}
+                        </div>
+                        <div style={{
+                          fontSize: 10, marginTop: 3, display: "flex", gap: 6, alignItems: "center",
+                          color: "var(--text-muted)",
+                        }}>
+                          <span>
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          {msg.direction === "OUTBOUND" && msg.status && (
+                            <span style={{
+                              color: msg.status === "failed" ? "var(--red)" : msg.status === "delivered" ? "var(--green)" : "var(--text-muted)",
+                              fontWeight: msg.status === "failed" ? 600 : 400,
+                            }}>
+                              {statusIcon(msg.status)} {msg.status === "failed" ? "failed" : msg.status === "delivered" ? "delivered" : "sent"}
+                            </span>
+                          )}
+                          {msg.error && (
+                            <span style={{ color: "var(--red)", fontSize: 10 }}>
+                              {msg.error}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
               <div ref={messagesEndRef} />
             </div>
@@ -333,38 +476,55 @@ export default function MessagesView({ conversations }: { conversations: Convers
                   {sendError}
                 </div>
               )}
-              <div style={{ display: "flex", gap: 8 }}>
-                <input
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                <QuickReplyDropdown onSelect={(text) => {
+                  setDraft(text);
+                  setTimeout(autoResize, 0);
+                }} />
+                <textarea
+                  ref={textareaRef}
                   className="form-input"
                   placeholder="Type a message..."
                   value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
+                  onChange={(e) => {
+                    setDraft(e.target.value);
+                    autoResize();
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       handleSend();
                     }
                   }}
-                  style={{ flex: 1 }}
+                  rows={1}
+                  style={{ flex: 1, resize: "none", lineHeight: 1.4 }}
                   disabled={sending}
                 />
                 <button
                   className="btn btn-primary"
                   onClick={handleSend}
-                  disabled={sending || !draft.trim()}
+                  disabled={sending || !draft.trim() || draft.length > 1600}
                   style={{ minWidth: 72 }}
                 >
-                  {sending ? "Sending..." : "Send SMS"}
+                  {sending ? "..." : "Send"}
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
-                Messages are sent via Twilio to {formatPhone(selected.phoneE164)}
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                  SMS to {formatPhone(selected.phoneE164)} · Shift+Enter for new line
+                </div>
+                {draft.length > 100 && (
+                  <div style={{ fontSize: 11, color: draft.length > 1500 ? "var(--red)" : "var(--text-muted)", fontWeight: draft.length > 1500 ? 600 : 400 }}>
+                    {draft.length}/1600
+                  </div>
+                )}
               </div>
             </div>
           </>
         ) : (
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
-            Select a conversation
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", flexDirection: "column", gap: 8 }}>
+            <div style={{ fontSize: 24 }}>{"\uD83D\uDCAC"}</div>
+            <div>Select a conversation</div>
           </div>
         )}
       </div>

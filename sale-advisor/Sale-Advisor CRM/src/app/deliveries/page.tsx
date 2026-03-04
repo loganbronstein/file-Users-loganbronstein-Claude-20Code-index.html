@@ -1,4 +1,4 @@
-import DeliveryTracker from "@/components/DeliveryTracker";
+import DeliveriesView from "./DeliveriesView";
 import { getDeliveries } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -12,10 +12,12 @@ export default async function DeliveriesPage() {
       <div className="header">
         <div>
           <h1>Deliveries</h1>
-          <div className="header-subtitle">{deliveries.length} delivery{deliveries.length !== 1 ? "ies" : ""}</div>
+          <div className="header-subtitle">
+            {deliveries.length} delivery{deliveries.length !== 1 ? "ies" : ""} via Lakeshore Hauling
+          </div>
         </div>
       </div>
-      <DeliveryTracker deliveries={serialized} />
+      <DeliveriesView deliveries={serialized} />
     </>
   );
 }
