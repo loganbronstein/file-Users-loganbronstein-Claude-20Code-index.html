@@ -5,9 +5,11 @@ import { NextRequest, NextResponse } from "next/server";
 // These routes are accessible without a session.
 const PUBLIC_PATHS = [
   "/login",
-  "/api/auth",         // NextAuth handlers (sign-in, callback, etc.)
+  "/api/auth",           // NextAuth handlers (sign-in, callback, etc.)
   "/api/twilio/inbound", // Twilio webhook (verified by X-Twilio-Signature)
+  "/api/sms/inbound",    // SMS/MMS ingestion webhook (verified by X-Twilio-Signature)
   "/api/leads/import",   // External lead intake (verified by HMAC)
+  "/api/health",         // Health check (no auth required)
   "/api/seed",           // Dev-only seed route (blocks in production internally)
   "/_next",
   "/favicon.ico",

@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import type { ListingStatus } from "@/generated/prisma/enums";
 
 export async function getStats() {
   const [activeClients, totalLeads, itemsListed, itemsSold, revenueAgg, payoutAgg] = await Promise.all([
@@ -293,7 +294,7 @@ export async function getDashboardSummary() {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const [todayLeads, unreadMessages, upcomingDeliveries, pendingPayouts] = await Promise.all([
+  const [todayLeads, unreadMessages, upcomingDeliveries, pendingPayouts, draftListings] = await Promise.all([
     prisma.lead.count({
       where: { createdAt: { gte: todayStart }, archivedAt: null },
     }),
@@ -306,9 +307,52 @@ export async function getDashboardSummary() {
     prisma.payout.count({
       where: { status: { in: ["PENDING", "PROCESSING"] } },
     }),
+    prisma.listing.count({
+      where: { status: { in: ["DRAFT", "NEEDS_REVIEW"] } },
+    }),
   ]);
 
-  return { todayLeads, unreadMessages, upcomingDeliveries, pendingPayouts };
+  return { todayLeads, unreadMessages, upcomingDeliveries, pendingPayouts, draftListings };
+}
+
+export async function getAllListings(status?: ListingStatus) {
+  return prisma.listing.findMany({
+    where: status ? { status } : undefined,
+    orderBy: { createdAt: "desc" },
+    include: { client: { select: { id: true, name: true } } },
+  });
+}
+
+export async function getListingById(id: string) {
+  return prisma.listing.findUnique({
+    where: { id },
+    include: {
+      client: { select: { id: true, name: true } },
+      inventoryItem: true,
+      listingImages: { orderBy: { sortOrder: "asc" } },
+      events: { orderBy: { createdAt: "desc" }, take: 20 },
+    },
+  });
+}
+
+export async function getDraftListingCount() {
+  return prisma.listing.count({ where: { status: { in: ["DRAFT", "NEEDS_REVIEW"] } } });
+}
+
+export async function getListingEvents(listingId: string) {
+  return prisma.listingEvent.findMany({
+    where: { listingId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+}
+
+export async function getListingAudits(listingId: string) {
+  return prisma.listingAudit.findMany({
+    where: { listingId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
 }
 
 export async function getWalkthroughs() {

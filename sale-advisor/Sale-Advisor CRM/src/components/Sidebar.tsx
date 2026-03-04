@@ -10,6 +10,7 @@ const navItems = {
     { icon: "👥", label: "Clients", href: "/clients" },
     { icon: "💬", label: "Messages", href: "/messages" },
     { icon: "📦", label: "Listings", href: "/listings" },
+    { icon: "✅", label: "Draft Approvals", href: "/listings?tab=REVIEW" },
   ],
   Marketing: [
     { icon: "📢", label: "Ad Campaigns", href: "/campaigns" },

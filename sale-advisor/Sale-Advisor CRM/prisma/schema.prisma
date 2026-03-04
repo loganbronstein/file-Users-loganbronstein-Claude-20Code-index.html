@@ -67,6 +67,23 @@ enum PayoutStatus {
   FAILED
 }
 
+enum ListingStatus {
+  DRAFT
+  NEEDS_REVIEW
+  APPROVED
+  POSTING
+  POSTED
+  SOLD
+  DELIVERY_SCHEDULED
+  PAID_OUT
+}
+
+enum ListingSource {
+  SMS
+  UPLOAD
+  MANUAL
+}
+
 enum UserRole {
   ADMIN
   OPS
@@ -163,6 +180,7 @@ model Client {
   inventory      InventoryItem[]
   deliveries     Delivery[]
   payouts        Payout[]
+  listings       Listing[]
   activityLogs   ActivityLog[]
 
   @@index([stage])
@@ -187,6 +205,8 @@ model InventoryItem {
   soldAt         DateTime?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  listing        Listing?
 
   @@index([clientId])
   @@index([status])
@@ -277,6 +297,101 @@ model Payout {
 
   @@index([clientId])
   @@index([status])
+}
+
+// ── Listing (marketplace post) ───────────────────────────
+
+model Listing {
+  id              String        @id @default(cuid())
+  clientId        String?
+  client          Client?       @relation(fields: [clientId], references: [id])
+  inventoryItemId String?       @unique
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+
+  title           String
+  description     String
+  priceCents      Int
+  category        String?
+  condition       String?
+
+  images          String[]      // Supabase Storage URLs
+  status          ListingStatus @default(DRAFT)
+  source          ListingSource @default(MANUAL)
+  aiGenerated     Boolean       @default(false)
+
+  marketplaces    String[]      // ["facebook", "ebay", "craigslist", "offerup"]
+  postedAt        DateTime?
+  soldAt          DateTime?
+
+  // Buyer + delivery tracking
+  buyerName       String?
+  buyerContact    String?
+  deliveryStatus  String?       // free-form: "scheduled", "in_transit", "delivered"
+  deliveryDate    DateTime?
+
+  // Payout tracking
+  payoutStatus    String?       // "pending", "processing", "paid"
+  payoutAmountCents Int?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  listingImages   ListingImage[]
+  events          ListingEvent[]
+  audits          ListingAudit[]
+
+  @@index([status])
+  @@index([clientId])
+  @@index([source])
+}
+
+// ── ListingImage (individual image metadata) ───────────────
+
+model ListingImage {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url         String
+  filename    String?
+  contentType String?
+  sizeBytes   Int?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([listingId])
+}
+
+// ── ListingEvent (status change log) ───────────────────────
+
+model ListingEvent {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  action      String   // e.g. "status.draft", "status.approved", "ai.generated", "marketplace.posted"
+  fromStatus  String?
+  toStatus    String?
+  detail      String?  // human-readable
+  metadata    String?  // JSON blob for extra context
+  createdAt   DateTime @default(now())
+
+  @@index([listingId])
+  @@index([createdAt])
+}
+
+// ── ListingAudit (field-level change tracking) ─────────────
+
+model ListingAudit {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  field       String   // which field changed
+  oldValue    String?
+  newValue    String?
+  changedBy   String?  // user email or "system"
+  createdAt   DateTime @default(now())
+
+  @@index([listingId])
+  @@index([createdAt])
 }
 
 // ── Auth (NextAuth Prisma Adapter) ───────────────────────

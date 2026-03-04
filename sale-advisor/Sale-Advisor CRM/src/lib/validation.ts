@@ -61,6 +61,13 @@ export const INVENTORY_PATCH_FIELDS = [
   "soldPriceCents", "marketplace", "status", "listedAt", "soldAt",
 ] as const;
 
+export const LISTING_PATCH_FIELDS = [
+  "title", "description", "priceCents", "category", "condition",
+  "marketplaces", "status", "images",
+  "buyerName", "buyerContact", "deliveryStatus", "deliveryDate",
+  "payoutStatus", "payoutAmountCents",
+] as const;
+
 // ── Enum value sets (for runtime validation) ──────────────
 
 export const LEAD_SOURCES = [
@@ -88,6 +95,15 @@ export const PAYOUT_STATUSES = [
 export const INVENTORY_STATUSES = [
   "PENDING_PICKUP", "IN_POSSESSION", "LISTED", "SOLD",
   "DELIVERED_TO_BUYER", "RETURNED", "CANCELLED",
+] as const;
+
+export const LISTING_STATUSES = [
+  "DRAFT", "NEEDS_REVIEW", "APPROVED", "POSTING", "POSTED",
+  "SOLD", "DELIVERY_SCHEDULED", "PAID_OUT",
+] as const;
+
+export const LISTING_SOURCES = [
+  "SMS", "UPLOAD", "MANUAL",
 ] as const;
 
 // ── Status transition maps ────────────────────────────────
@@ -128,6 +144,17 @@ export const INVENTORY_TRANSITIONS: Record<string, string[]> = {
   LISTED: ["SOLD", "RETURNED", "CANCELLED"],
   SOLD: ["DELIVERED_TO_BUYER"],
   // DELIVERED_TO_BUYER, RETURNED, CANCELLED are terminal
+};
+
+export const LISTING_TRANSITIONS: Record<string, string[]> = {
+  DRAFT: ["NEEDS_REVIEW", "APPROVED"],
+  NEEDS_REVIEW: ["APPROVED", "DRAFT"],
+  APPROVED: ["POSTING"],
+  POSTING: ["POSTED"],
+  POSTED: ["SOLD"],
+  SOLD: ["DELIVERY_SCHEDULED"],
+  DELIVERY_SCHEDULED: ["PAID_OUT"],
+  // PAID_OUT is terminal
 };
 
 // ── Transition validator ──────────────────────────────────

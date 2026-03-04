@@ -9,6 +9,7 @@ import {
   webhookUnauthorized,
   webhookRateLimited,
 } from "@/lib/webhook-security";
+import { downloadAndUpload } from "@/lib/supabase-storage";
 
 /**
  * POST /api/twilio/inbound
@@ -47,7 +48,9 @@ export async function POST(req: NextRequest) {
   const body = params.Body || params.body;
   const messageSid = params.MessageSid || params.messageSid;
 
-  if (!from || !body) {
+  const hasMedia = parseInt(params.NumMedia || params.numMedia || "0", 10) > 0;
+
+  if (!from || (!body && !hasMedia)) {
     return new NextResponse(
       '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
       { status: 400, headers: { "Content-Type": "text/xml" } },
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
   // Store the inbound message
   await prisma.message.create({
     data: {
-      content: body,
+      content: body || (hasMedia ? "(Photo message)" : ""),
       direction: "INBOUND",
       conversationId: conversation.id,
       leadId: conversation.leadId,
@@ -91,9 +94,61 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  // ── MMS image handling ────────────────────────────────
+  const numMedia = parseInt(params.NumMedia || params.numMedia || "0", 10);
+  if (numMedia > 0) {
+    try {
+      const imageUrls: string[] = [];
+      for (let i = 0; i < numMedia; i++) {
+        const mediaUrl = params[`MediaUrl${i}`] || params[`mediaUrl${i}`];
+        const mediaType = params[`MediaContentType${i}`] || params[`mediaContentType${i}`] || "";
+        if (!mediaUrl) continue;
+        // Only process image types
+        if (!mediaType.startsWith("image/")) continue;
+
+        const permanentUrl = await downloadAndUpload(mediaUrl, i);
+        imageUrls.push(permanentUrl);
+      }
+
+      if (imageUrls.length > 0) {
+        // Create a DRAFT listing from the MMS photos
+        const listing = await prisma.listing.create({
+          data: {
+            title: "SMS Photo — Pending AI Review",
+            description: "",
+            priceCents: 0,
+            images: imageUrls,
+            status: "DRAFT",
+            source: "SMS",
+            aiGenerated: false,
+            clientId: conversation.clientId || null,
+          },
+        });
+
+        // Log activity
+        await prisma.activityLog.create({
+          data: {
+            action: "listing.sms_received",
+            detail: `${imageUrls.length} photo(s) received via MMS — draft listing created`,
+            clientId: conversation.clientId || null,
+          },
+        });
+
+        // Trigger AI generation in background (non-blocking)
+        generateListingInBackground(listing.id, imageUrls).catch((err) => {
+          console.error("[inbound] AI listing generation failed:", err);
+        });
+      }
+    } catch (err) {
+      console.error("[inbound] MMS processing error:", err);
+      // Don't fail the webhook — SMS text was already saved
+    }
+  }
+
   // Notify admin — never auto-reply to the customer
   const leadName = conversation.lead?.name || null;
-  await notifyInboundSms(leadName, phoneE164, body).catch((err) => {
+  const notifyBody = numMedia > 0 ? `${body || "(photo)"} [+${numMedia} image(s)]` : body;
+  await notifyInboundSms(leadName, phoneE164, notifyBody).catch((err) => {
     console.error("[inbound] notification error:", err);
   });
 
@@ -102,4 +157,30 @@ export async function POST(req: NextRequest) {
     '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
     { status: 200, headers: { "Content-Type": "text/xml" } },
   );
+}
+
+/**
+ * Background AI listing generation — doesn't block the webhook response.
+ */
+async function generateListingInBackground(listingId: string, imageUrls: string[]) {
+  try {
+    const { generateListing } = await import("@/lib/ai-listing");
+    const details = await generateListing(imageUrls);
+    await prisma.listing.update({
+      where: { id: listingId },
+      data: {
+        title: details.title,
+        description: details.description,
+        priceCents: details.priceCents,
+        category: details.category,
+        condition: details.condition,
+        aiGenerated: true,
+        status: "NEEDS_REVIEW",
+      },
+    });
+    console.log(`[inbound] AI listing generated for ${listingId}: "${details.title}"`);
+  } catch (err) {
+    console.error(`[inbound] AI generation failed for ${listingId}:`, err);
+    // Listing stays as DRAFT with placeholder — user can fill manually
+  }
 }
