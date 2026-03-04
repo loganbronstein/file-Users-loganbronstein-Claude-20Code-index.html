@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import SearchTrigger from "@/components/SearchTrigger";
 
 const navItems = {
   Main: [
@@ -49,6 +50,8 @@ export default function Sidebar() {
           </div>
         </Link>
       </div>
+
+      <SearchTrigger />
 
       <nav>
         {Object.entries(navItems).map(([section, items]) => (

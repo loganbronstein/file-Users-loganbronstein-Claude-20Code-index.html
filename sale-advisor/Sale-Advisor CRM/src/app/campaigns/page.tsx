@@ -1,4 +1,6 @@
-import AdPerformance from "@/components/AdPerformance";
+import CampaignsView from "./CampaignsView";
+
+export const dynamic = "force-dynamic";
 
 export default function CampaignsPage() {
   return (
@@ -6,10 +8,10 @@ export default function CampaignsPage() {
       <div className="header">
         <div>
           <h1>Ad Campaigns</h1>
-          <div className="header-subtitle">Campaign tracking — will be wired to Meta/Google ad APIs</div>
+          <div className="header-subtitle">Track campaigns, budgets, and lead attribution across all platforms</div>
         </div>
       </div>
-      <AdPerformance />
+      <CampaignsView />
     </>
   );
 }

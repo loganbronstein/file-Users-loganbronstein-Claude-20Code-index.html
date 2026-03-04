@@ -340,9 +340,13 @@ model Listing {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  listingImages   ListingImage[]
-  events          ListingEvent[]
-  audits          ListingAudit[]
+  soldPriceCents   Int?
+  soldMarketplace  String?       // which marketplace it sold on
+
+  listingImages    ListingImage[]
+  events           ListingEvent[]
+  audits           ListingAudit[]
+  marketplacePosts MarketplacePost[]
 
   @@index([status])
   @@index([clientId])
@@ -447,4 +451,45 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// ── Campaign (ad campaign tracker) ────────────────────────
+
+model Campaign {
+  id              String    @id @default(cuid())
+  name            String
+  platform        String    // "meta", "google", "tiktok", "nextdoor", "other"
+  status          String    @default("DRAFT") // DRAFT, ACTIVE, PAUSED, COMPLETED
+  budgetCents     Int?
+  startDate       DateTime?
+  endDate         DateTime?
+  targetAudience  String?
+  notes           String?
+  utmCampaign     String?   // links to Lead.utmCampaign for attribution
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status])
+  @@index([platform])
+}
+
+// ── MarketplacePost (per-marketplace posting tracker) ──────
+
+model MarketplacePost {
+  id          String    @id @default(cuid())
+  listingId   String
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  marketplace String    // "facebook", "ebay", "craigslist", "offerup"
+  status      String    @default("PENDING") // PENDING, POSTED, FAILED, REMOVED
+  externalUrl String?
+  externalId  String?
+  formattedTitle       String?
+  formattedDescription String?
+  postedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([listingId])
+  @@index([marketplace])
+  @@unique([listingId, marketplace])
 }

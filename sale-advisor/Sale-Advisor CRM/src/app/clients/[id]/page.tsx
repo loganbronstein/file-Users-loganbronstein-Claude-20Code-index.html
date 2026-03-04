@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getClientById } from "@/lib/queries";
 import Link from "next/link";
 import { ScheduleDeliveryForm, CreatePayoutForm, InventoryActions } from "./ClientActions";
+import WalkthroughInfo from "@/components/clients/WalkthroughInfo";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           <div className="stat-value" style={{ fontSize: 24 }}>{client.deliveries.length}</div>
         </div>
       </div>
+
+      {/* Walkthrough Info */}
+      <WalkthroughInfo
+        stage={client.stage}
+        walkthroughDate={client.walkthroughDate?.toISOString() || null}
+        walkthroughAddress={client.walkthroughAddress || null}
+        walkthroughNotes={client.walkthroughNotes || null}
+      />
 
       {/* Action buttons */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
