@@ -27,3 +27,6 @@
 - Next.js 16 App Router — `params` is a Promise, must `await params` in route handlers
 - Prisma orderBy with nulls: use `{ sort: "asc", nulls: "last" }`
 - The middleware blocks all non-public routes. If you add a new public route, it needs to be added to PUBLIC_PATHS in middleware.ts — write this to your schema-requests file and Terminal A will add it
+- Worktrees need `npx prisma generate` before build — generated client isn't checked in
+- `npx tsc --noEmit` is the fastest way to validate TS correctness in a worktree (doesn't need DATABASE_URL)
+- For click-outside-to-close dropdowns: use `useRef` + `mousedown` listener on document, clean up in effect return

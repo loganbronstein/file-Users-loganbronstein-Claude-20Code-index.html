@@ -36,14 +36,16 @@
 - src/components/TodayWalkthroughs.tsx
 
 ## Terminal B — MESSAGES + DELIVERIES + PAYOUTS
-**Status:** ASSIGNED
-**Branch:** worktree (isolated copy)
-**Boundaries:**
-- ONLY create/modify files within your assigned domains (see prompt)
-- Do NOT touch any file listed under Terminal A's owned files
-- If you need a schema change, write it to .agent-coordination/schema-requests-b.md
-- If you need a new query, write it to .agent-coordination/query-requests-b.md
-- Terminal A will apply schema/query changes from main
+**Status:** COMPLETE
+**Branch:** terminal-b (worktree at .claude/worktrees/terminal-b)
+**What was built:**
+- Messages page overhaul: search bar, quick reply templates (5 presets), mark-as-read API, linked conversation headers with lead/client badges, date separators, auto-resize textarea, character counter, enhanced status indicators
+- New API: `PATCH /api/conversations/[id]/read` — marks inbound messages as read
+- New component: `src/components/messages/QuickReplyDropdown.tsx`
+- Deliveries page: new DeliveriesView with stats row (scheduled/transit/completed + revenue/cost/profit), tab filters with counts, Next Step action buttons (Start Pickup → In Transit → Delivered), date grouping (Today/Tomorrow/This Week/Later/Past), linked client names, progress bars
+- New component: `src/app/deliveries/DeliveriesView.tsx`
+- Payouts page: 4-card summary (Total Paid/Pending/Commission/Avg Commission %), tab filters with counts including FAILED, inline confirm/cancel on Mark Paid, status badges with distinct colors per state
+**No schema changes needed. No Terminal A files modified.**
 
 ## Terminal C — PRICING TOOL + LEAD INTAKE
 **Status:** COMPLETE
