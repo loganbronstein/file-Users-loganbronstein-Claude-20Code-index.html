@@ -20,6 +20,7 @@ const navItems = {
   Operations: [
     { icon: "📅", label: "Walkthroughs", href: "/walkthroughs" },
     { icon: "📋", label: "Inventory", href: "/inventory" },
+    { icon: "💲", label: "Pricing Tool", href: "/pricing" },
     { icon: "🚚", label: "Deliveries", href: "/deliveries" },
     { icon: "💰", label: "Payouts", href: "/payouts" },
   ],

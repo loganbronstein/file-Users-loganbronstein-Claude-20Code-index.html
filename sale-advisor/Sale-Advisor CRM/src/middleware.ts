@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   "/api/storage/check",  // Dev-only Supabase storage check
   "/api/test/",          // Dev-only test routes
   "/api/seed",           // Dev-only seed route (blocks in production internally)
+  "/api/intake",         // Public lead intake form API
+  "/intake",             // Public lead intake page
   "/_next",
   "/favicon.ico",
 ];
