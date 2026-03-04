@@ -1,48 +1,46 @@
-import type { MarketplaceListing, PostResult } from "./types";
-import { postListing as postFacebook } from "./facebookMarketplace";
-import { postListing as postEbay } from "./ebay";
-import { postListing as postCraigslist } from "./craigslist";
-import { postListing as postOfferup } from "./offerup";
+import type { MarketplaceListing, MarketplaceContent } from "./types";
+import { generateContent as genFacebook } from "./facebookMarketplace";
+import { generateContent as genEbay } from "./ebay";
+import { generateContent as genCraigslist } from "./craigslist";
+import { generateContent as genOfferup } from "./offerup";
 
-const adapters: Record<string, (listing: MarketplaceListing) => Promise<PostResult>> = {
-  facebook: postFacebook,
-  ebay: postEbay,
-  craigslist: postCraigslist,
-  offerup: postOfferup,
+const generators: Record<string, (listing: MarketplaceListing) => MarketplaceContent> = {
+  facebook: genFacebook,
+  ebay: genEbay,
+  craigslist: genCraigslist,
+  offerup: genOfferup,
 };
 
 export const VALID_MARKETPLACES = ["facebook", "ebay", "craigslist", "offerup"] as const;
 
+export const MARKETPLACE_LABELS: Record<string, string> = {
+  facebook: "Facebook Marketplace",
+  ebay: "eBay",
+  craigslist: "Craigslist",
+  offerup: "OfferUp",
+};
+
 /**
- * Post a listing to the specified marketplaces.
- * Returns results for each marketplace attempted.
+ * Generate marketplace-ready content for each selected marketplace.
+ * Returns formatted title, description, price, and posting tips per marketplace.
  */
-export async function postToMarketplaces(
+export function generateMarketplaceContent(
   listing: MarketplaceListing,
   marketplaces: string[],
-): Promise<PostResult[]> {
-  const results: PostResult[] = [];
-
-  for (const mp of marketplaces) {
-    const adapter = adapters[mp];
-    if (!adapter) {
-      results.push({ marketplace: mp, success: false, error: `Unknown marketplace: ${mp}` });
-      continue;
-    }
-
-    try {
-      const result = await adapter(listing);
-      results.push(result);
-    } catch (err) {
-      results.push({
+): MarketplaceContent[] {
+  return marketplaces.map((mp) => {
+    const gen = generators[mp];
+    if (!gen) {
+      return {
         marketplace: mp,
-        success: false,
-        error: err instanceof Error ? err.message : "Unknown error",
-      });
+        formattedTitle: listing.title,
+        formattedDescription: listing.description,
+        priceDollars: `$${(listing.priceCents / 100).toFixed(2)}`,
+        tips: `Unknown marketplace: ${mp}`,
+      };
     }
-  }
-
-  return results;
+    return gen(listing);
+  });
 }
 
-export type { MarketplaceListing, PostResult };
+export type { MarketplaceListing, MarketplaceContent, MarketplacePostRecord } from "./types";

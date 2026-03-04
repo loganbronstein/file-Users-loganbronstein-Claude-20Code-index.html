@@ -1,20 +1,36 @@
-import type { MarketplaceListing, PostResult } from "./types";
+import type { MarketplaceListing, MarketplaceContent } from "./types";
+
+const PRICE_FMT = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0 })}`;
 
 /**
- * OfferUp adapter.
- * Currently logs the payload — will be replaced with actual API integration.
+ * Generate OfferUp-optimized content.
+ * OfferUp has no public API — this produces copy-ready text for manual posting.
  */
-export async function postListing(listing: MarketplaceListing): Promise<PostResult> {
-  console.log("[marketplace:offerup] Would post listing:", {
-    id: listing.id,
-    title: listing.title,
-    price: `$${(listing.priceCents / 100).toFixed(2)}`,
-    images: listing.images.length,
-  });
+export function generateContent(listing: MarketplaceListing): MarketplaceContent {
+  const price = PRICE_FMT(listing.priceCents);
+  const condition = listing.condition || "Good";
+
+  // OfferUp titles should be short and punchy
+  const title = listing.title.slice(0, 50);
+
+  const description = [
+    listing.description,
+    "",
+    `Condition: ${condition}`,
+    listing.category ? `Category: ${listing.category}` : null,
+    "",
+    "Delivery available — message for details!",
+    "",
+    "Sale Advisor | saleadvisor.com",
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
 
   return {
     marketplace: "offerup",
-    success: true,
-    externalId: `ou-placeholder-${listing.id}`,
+    formattedTitle: title,
+    formattedDescription: description,
+    priceDollars: price,
+    tips: `OfferUp tips: Set price to ${price}. Mark condition as "${condition}". Add up to 10 photos. Enable "willing to ship" if applicable. Location: Chicago, IL.`,
   };
 }
