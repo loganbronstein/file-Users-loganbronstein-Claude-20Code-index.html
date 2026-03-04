@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useToast } from "@/components/Toast";
+import QuickReplyDropdown from "@/components/messages/QuickReplyDropdown";
 
 interface ConversationPreview {
   id: string;
@@ -53,6 +56,11 @@ function formatPhone(e164: string): string {
 function formatDateSeparator(date: Date): string {
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) return "Today";
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
   return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
 }
 
@@ -68,6 +76,14 @@ const avatarColors = [
   "linear-gradient(135deg, #ec4899, #a855f7)",
 ];
 
+function statusIcon(status: string | null): string {
+  if (!status) return "";
+  if (status === "delivered") return "\u2713\u2713";
+  if (status === "sent" || status === "queued") return "\u2713";
+  if (status === "failed") return "\u2717";
+  return "";
+}
+
 export default function MessagesView({ conversations }: { conversations: ConversationPreview[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(conversations[0]?.id || null);
   const [threadMessages, setThreadMessages] = useState<MessageItem[]>([]);
@@ -79,6 +95,7 @@ export default function MessagesView({ conversations }: { conversations: Convers
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
+  const { toast } = useToast();
 
   // Auto-resize textarea
   const autoResize = useCallback(() => {
@@ -103,7 +120,12 @@ export default function MessagesView({ conversations }: { conversations: Convers
         setThreadMessages([]);
         setLoading(false);
       });
-  }, [selectedId]);
+
+    // Explicitly mark as read
+    fetch(`/api/conversations/${selectedId}/read`, { method: "PATCH" })
+      .then(() => router.refresh())
+      .catch(() => {});
+  }, [selectedId, router]);
 
   // Poll for new messages every 5 seconds
   useEffect(() => {
@@ -142,6 +164,10 @@ export default function MessagesView({ conversations }: { conversations: Convers
 
   async function handleSend() {
     if (!draft.trim() || !selectedId) return;
+    if (draft.length > 1600) {
+      toast("Message exceeds 1600 character SMS limit", "error");
+      return;
+    }
     setSending(true);
     setSendError(null);
 
@@ -159,17 +185,14 @@ export default function MessagesView({ conversations }: { conversations: Convers
 
       if (!res.ok) {
         setSendError(data.error || "Failed to send");
-        // Still add the message to the thread if it was saved
         if (data.message) {
           setThreadMessages((prev) => [...prev, data.message]);
         }
       } else {
         setThreadMessages((prev) => [...prev, data]);
         setDraft("");
-        // Reset textarea height
-        if (textareaRef.current) {
-          textareaRef.current.style.height = "auto";
-        }
+        if (textareaRef.current) textareaRef.current.style.height = "auto";
+        toast("Message sent");
       }
 
       router.refresh();
@@ -191,14 +214,20 @@ export default function MessagesView({ conversations }: { conversations: Convers
     }
     if (conv.lead) parts.push(conv.lead.source.toLowerCase().replace("_", " "));
     if (conv.client) parts.push("client");
-    return parts.join(" · ");
+    return parts.join(" \u00b7 ");
+  }
+
+  function getProfileLink(conv: ConversationPreview): string | null {
+    if (conv.client) return `/clients/${conv.client.id}`;
+    if (conv.lead) return `/leads/${conv.lead.id}`;
+    return null;
   }
 
   if (conversations.length === 0) {
     return (
       <div className="card">
         <div style={{ padding: 48, textAlign: "center", color: "var(--text-muted)" }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>💬</div>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>{"\uD83D\uDCAC"}</div>
           <div style={{ fontSize: 15, marginBottom: 8 }}>No conversations yet</div>
           <div style={{ fontSize: 13 }}>
             Conversations appear when you create a lead with a phone number or receive an inbound SMS.
@@ -215,20 +244,22 @@ export default function MessagesView({ conversations }: { conversations: Convers
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", fontSize: 12, color: "var(--text-muted)" }}>
           {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
         </div>
+
         {/* Search bar */}
         <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border)" }}>
           <input
             className="form-input"
-            placeholder="Search conversations..."
+            placeholder="Search by name or phone..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ fontSize: 12, padding: "6px 10px" }}
           />
         </div>
+
         <div style={{ flex: 1, overflowY: "auto" }}>
           {filteredConversations.length === 0 ? (
             <div style={{ padding: 24, textAlign: "center", color: "var(--text-muted)", fontSize: 12 }}>
-              No conversations match &ldquo;{searchQuery}&rdquo;
+              No conversations match your search
             </div>
           ) : (
             filteredConversations.map((conv, i) => {
@@ -302,8 +333,36 @@ export default function MessagesView({ conversations }: { conversations: Convers
               display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
-                  {getDisplayName(selected)}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {(() => {
+                    const link = getProfileLink(selected);
+                    const displayName = getDisplayName(selected);
+                    return link ? (
+                      <Link href={link} style={{ fontSize: 15, fontWeight: 600, color: "var(--accent-light)", textDecoration: "none" }}>
+                        {displayName}
+                      </Link>
+                    ) : (
+                      <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
+                        {displayName}
+                      </span>
+                    );
+                  })()}
+                  {selected.client && (
+                    <span style={{
+                      fontSize: 10, padding: "2px 6px", borderRadius: 4,
+                      background: "var(--green-bg)", color: "var(--green)",
+                    }}>
+                      Client
+                    </span>
+                  )}
+                  {selected.lead && !selected.client && (
+                    <span style={{
+                      fontSize: 10, padding: "2px 6px", borderRadius: 4,
+                      background: "var(--blue-bg)", color: "var(--blue)",
+                    }}>
+                      Lead
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
                   {getSubtext(selected)}
@@ -387,9 +446,10 @@ export default function MessagesView({ conversations }: { conversations: Convers
                           </span>
                           {msg.direction === "OUTBOUND" && msg.status && (
                             <span style={{
-                              color: msg.status === "failed" ? "var(--red)" : "var(--text-muted)",
+                              color: msg.status === "failed" ? "var(--red)" : msg.status === "delivered" ? "var(--green)" : "var(--text-muted)",
+                              fontWeight: msg.status === "failed" ? 600 : 400,
                             }}>
-                              {msg.status === "failed" ? "failed" : msg.status === "delivered" ? "delivered" : "sent"}
+                              {statusIcon(msg.status)} {msg.status === "failed" ? "failed" : msg.status === "delivered" ? "delivered" : "sent"}
                             </span>
                           )}
                           {msg.error && (
@@ -417,6 +477,10 @@ export default function MessagesView({ conversations }: { conversations: Convers
                 </div>
               )}
               <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                <QuickReplyDropdown onSelect={(text) => {
+                  setDraft(text);
+                  setTimeout(autoResize, 0);
+                }} />
                 <textarea
                   ref={textareaRef}
                   className="form-input"
@@ -439,18 +503,18 @@ export default function MessagesView({ conversations }: { conversations: Convers
                 <button
                   className="btn btn-primary"
                   onClick={handleSend}
-                  disabled={sending || !draft.trim()}
+                  disabled={sending || !draft.trim() || draft.length > 1600}
                   style={{ minWidth: 72 }}
                 >
-                  {sending ? "Sending..." : "Send SMS"}
+                  {sending ? "..." : "Send"}
                 </button>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
                 <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                  Messages are sent via Twilio to {formatPhone(selected.phoneE164)}
+                  SMS to {formatPhone(selected.phoneE164)} · Shift+Enter for new line
                 </div>
                 {draft.length > 100 && (
-                  <div style={{ fontSize: 11, color: draft.length > 1500 ? "var(--red)" : "var(--text-muted)" }}>
+                  <div style={{ fontSize: 11, color: draft.length > 1500 ? "var(--red)" : "var(--text-muted)", fontWeight: draft.length > 1500 ? 600 : 400 }}>
                     {draft.length}/1600
                   </div>
                 )}
@@ -458,8 +522,9 @@ export default function MessagesView({ conversations }: { conversations: Convers
             </div>
           </>
         ) : (
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
-            Select a conversation
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", flexDirection: "column", gap: 8 }}>
+            <div style={{ fontSize: 24 }}>{"\uD83D\uDCAC"}</div>
+            <div>Select a conversation</div>
           </div>
         )}
       </div>
