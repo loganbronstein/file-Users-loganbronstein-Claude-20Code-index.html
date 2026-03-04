@@ -1,11 +1,16 @@
-import { getAllPayouts } from "@/lib/queries";
+import { getAllPayouts, getClientsForDropdown } from "@/lib/queries";
 import PayoutsView from "./PayoutsView";
 
 export const dynamic = "force-dynamic";
 
 export default async function PayoutsPage() {
-  const payouts = await getAllPayouts();
-  const serialized = JSON.parse(JSON.stringify(payouts));
+  const [payouts, clients] = await Promise.all([
+    getAllPayouts(),
+    getClientsForDropdown(),
+  ]);
+
+  const serializedPayouts = JSON.parse(JSON.stringify(payouts));
+  const serializedClients = JSON.parse(JSON.stringify(clients));
 
   const totalPaid = payouts.filter((p) => p.status === "PAID").reduce((s, p) => s + p.payoutCents, 0);
   const totalPending = payouts.filter((p) => p.status !== "PAID").reduce((s, p) => s + p.payoutCents, 0);
@@ -37,7 +42,7 @@ export default async function PayoutsPage() {
         </div>
       </div>
 
-      <PayoutsView payouts={serialized} />
+      <PayoutsView payouts={serializedPayouts} clients={serializedClients} />
     </>
   );
 }

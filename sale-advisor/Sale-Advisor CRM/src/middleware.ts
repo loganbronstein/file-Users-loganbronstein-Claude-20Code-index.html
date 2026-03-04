@@ -10,6 +10,8 @@ const PUBLIC_PATHS = [
   "/api/sms/inbound",    // SMS/MMS ingestion webhook (verified by X-Twilio-Signature)
   "/api/leads/import",   // External lead intake (verified by HMAC)
   "/api/health",         // Health check (no auth required)
+  "/api/storage/check",  // Dev-only Supabase storage check
+  "/api/test/",          // Dev-only test routes
   "/api/seed",           // Dev-only seed route (blocks in production internally)
   "/_next",
   "/favicon.ico",

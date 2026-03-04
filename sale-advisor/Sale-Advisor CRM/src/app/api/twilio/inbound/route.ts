@@ -10,6 +10,12 @@ import {
   webhookRateLimited,
 } from "@/lib/webhook-security";
 import { downloadAndUpload } from "@/lib/supabase-storage";
+import crypto from "crypto";
+
+/** Generate a short trace ID for correlating logs across a single inbound MMS request */
+function traceId(): string {
+  return `mms-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
+}
 
 /**
  * POST /api/twilio/inbound
@@ -17,9 +23,12 @@ import { downloadAndUpload } from "@/lib/supabase-storage";
  * Validates X-Twilio-Signature, checks MessageSid replay, rate-limits by IP.
  */
 export async function POST(req: NextRequest) {
+  const trace = traceId();
+
   // ── Rate limit: 30 requests per minute per IP ──────────
   const ip = getClientIp(req);
   if (!rateLimit(`twilio:${ip}`, 30, 60_000)) {
+    console.warn(`[${trace}] rate limited IP: ${ip}`);
     return webhookRateLimited();
   }
 
@@ -39,7 +48,7 @@ export async function POST(req: NextRequest) {
   // Skip in development for local testing
   if (process.env.NODE_ENV === "production") {
     if (!validateTwilioSignature(req, params)) {
-      console.warn("[twilio/inbound] invalid signature from", ip);
+      console.warn(`[${trace}] invalid Twilio signature from ${ip}`);
       return webhookUnauthorized("Invalid Twilio signature");
     }
   }
@@ -49,6 +58,8 @@ export async function POST(req: NextRequest) {
   const messageSid = params.MessageSid || params.messageSid;
 
   const hasMedia = parseInt(params.NumMedia || params.numMedia || "0", 10) > 0;
+
+  console.log(`[${trace}] inbound from=${from} sid=${messageSid} media=${hasMedia}`);
 
   if (!from || (!body && !hasMedia)) {
     return new NextResponse(
@@ -111,6 +122,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (imageUrls.length > 0) {
+        console.log(`[${trace}] uploaded ${imageUrls.length} image(s) to Supabase`);
         // Create a DRAFT listing from the MMS photos
         const listing = await prisma.listing.create({
           data: {
@@ -134,13 +146,15 @@ export async function POST(req: NextRequest) {
           },
         });
 
+        console.log(`[${trace}] draft listing created: ${listing.id}`);
+
         // Trigger AI generation in background (non-blocking)
-        generateListingInBackground(listing.id, imageUrls).catch((err) => {
-          console.error("[inbound] AI listing generation failed:", err);
+        generateListingInBackground(trace, listing.id, imageUrls).catch((err) => {
+          console.error(`[${trace}] AI listing generation failed:`, err);
         });
       }
     } catch (err) {
-      console.error("[inbound] MMS processing error:", err);
+      console.error(`[${trace}] MMS processing error:`, err);
       // Don't fail the webhook — SMS text was already saved
     }
   }
@@ -162,8 +176,9 @@ export async function POST(req: NextRequest) {
 /**
  * Background AI listing generation — doesn't block the webhook response.
  */
-async function generateListingInBackground(listingId: string, imageUrls: string[]) {
+async function generateListingInBackground(trace: string, listingId: string, imageUrls: string[]) {
   try {
+    console.log(`[${trace}] starting AI generation for listing ${listingId}`);
     const { generateListing } = await import("@/lib/ai-listing");
     const details = await generateListing(imageUrls);
     await prisma.listing.update({
@@ -178,9 +193,9 @@ async function generateListingInBackground(listingId: string, imageUrls: string[
         status: "NEEDS_REVIEW",
       },
     });
-    console.log(`[inbound] AI listing generated for ${listingId}: "${details.title}"`);
+    console.log(`[${trace}] AI listing generated for ${listingId}: "${details.title}" — $${(details.priceCents / 100).toFixed(2)}`);
   } catch (err) {
-    console.error(`[inbound] AI generation failed for ${listingId}:`, err);
+    console.error(`[${trace}] AI generation failed for ${listingId}:`, err);
     // Listing stays as DRAFT with placeholder — user can fill manually
   }
 }

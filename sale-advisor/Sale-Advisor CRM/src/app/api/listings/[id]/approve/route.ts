@@ -9,9 +9,14 @@ type Params = { params: Promise<{ id: string }> };
 
 /**
  * POST /api/listings/[id]/approve — Approve a listing and trigger marketplace posting
+ *
+ * Body (optional):
+ *   { marketplaces?: string[] }   — which marketplaces to post to
+ *
  * Transitions: DRAFT/NEEDS_REVIEW → APPROVED → POSTING → POSTED
+ * Stores per-marketplace results in a ListingEvent metadata JSON.
  */
-export async function POST(_req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params }: Params) {
   const auth = await requireAuth();
   if (auth instanceof NextResponse) return auth;
 
@@ -34,17 +39,27 @@ export async function POST(_req: NextRequest, { params }: Params) {
     return validationError(["Listing must have a price before approval"]);
   }
 
-  // Determine marketplaces
-  const marketplaces = listing.marketplaces.length > 0
-    ? listing.marketplaces
-    : ["facebook", "ebay", "craigslist", "offerup"];
+  // Accept marketplace selection from request body
+  let selectedMarketplaces: string[];
+  try {
+    const body = await req.json().catch(() => ({}));
+    selectedMarketplaces = Array.isArray(body.marketplaces) && body.marketplaces.length > 0
+      ? body.marketplaces
+      : listing.marketplaces.length > 0
+        ? listing.marketplaces
+        : ["facebook", "ebay", "craigslist", "offerup"];
+  } catch {
+    selectedMarketplaces = listing.marketplaces.length > 0
+      ? listing.marketplaces
+      : ["facebook", "ebay", "craigslist", "offerup"];
+  }
 
   const prevStatus = listing.status;
 
   // Step 1: APPROVED
   await prisma.listing.update({
     where: { id },
-    data: { status: "APPROVED", marketplaces },
+    data: { status: "APPROVED", marketplaces: selectedMarketplaces },
   });
   await logStatusTransition({
     listingId: id,
@@ -78,7 +93,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
       condition: listing.condition,
       images: listing.images,
     },
-    marketplaces,
+    selectedMarketplaces,
   );
 
   // Step 4: POSTED if all succeeded
@@ -100,17 +115,25 @@ export async function POST(_req: NextRequest, { params }: Params) {
     });
   }
 
-  // Log marketplace results
+  // Log marketplace results with per-marketplace detail
   await logListingEvent({
     listingId: id,
     action: "marketplace.posted",
-    detail: `Posted to: ${marketplaces.join(", ")}`,
-    metadata: { results },
+    detail: `Posted to: ${selectedMarketplaces.join(", ")}`,
+    metadata: {
+      marketplaces: selectedMarketplaces,
+      results: results.map((r) => ({
+        marketplace: r.marketplace,
+        success: r.success,
+        externalId: r.externalId || null,
+        error: r.error || null,
+      })),
+    },
   });
 
   return NextResponse.json({
     ok: true,
-    listing: { ...listing, status: finalStatus, marketplaces },
+    listing: { ...listing, status: finalStatus, marketplaces: selectedMarketplaces },
     marketplaceResults: results,
   });
 }

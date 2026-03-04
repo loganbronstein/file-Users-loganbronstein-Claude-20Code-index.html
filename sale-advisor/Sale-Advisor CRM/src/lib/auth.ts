@@ -16,6 +16,11 @@ function getAllowedEmails(): string[] {
   return raw.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
 }
 
+// ── Denylist — these accounts can NEVER sign in ─────────────
+const DENIED_EMAILS = [
+  "inquiries@saleadvisor.com",
+];
+
 // ── Resend client (lazy init to avoid build-time crash) ─────
 function getResend() {
   const key = process.env.RESEND_API_KEY;
@@ -76,21 +81,33 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, profile }) {
-      // Single allowlist for ALL providers (Google + Email magic link)
       const email = (user.email || profile?.email || "").toLowerCase().trim();
       if (!email) {
         console.warn("[auth] Blocked sign-in: no email provided");
-        return false;
+        return "/login?error=AccessDenied";
       }
 
+      // ── Denylist check (highest priority — always blocked) ──
+      if (DENIED_EMAILS.includes(email)) {
+        console.warn(`[auth] DENIED sign-in from denylisted account: ${email}`);
+        return "/login?error=Denied";
+      }
+
+      // ── Domain check for Google OAuth ───────────────────────
+      if (!email.endsWith("@saleadvisor.com")) {
+        console.warn(`[auth] Blocked sign-in from wrong domain: ${email}`);
+        return "/login?error=WrongDomain";
+      }
+
+      // ── Allowlist check ─────────────────────────────────────
       const allowed = getAllowedEmails();
       if (allowed.length === 0) {
         console.error("[auth] Allowlist is empty — blocking all sign-ins");
-        return false;
+        return "/login?error=AccessDenied";
       }
       if (!allowed.includes(email)) {
         console.warn(`[auth] Blocked sign-in attempt from: ${email}`);
-        return false;
+        return "/login?error=AccessDenied";
       }
       return true;
     },

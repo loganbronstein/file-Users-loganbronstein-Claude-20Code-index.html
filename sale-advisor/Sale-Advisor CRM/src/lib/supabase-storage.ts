@@ -1,19 +1,49 @@
 /**
  * Supabase Storage client for listing images.
  * Uploads images to the "listing-images" bucket and returns public URLs.
+ *
+ * ⚠️  SECURITY: The Supabase service role key was previously exposed in a chat session.
+ *     It MUST be rotated in the Supabase dashboard before production launch.
+ *     After rotating, update SUPABASE_SERVICE_ROLE_KEY in .env and all deploy targets.
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const BUCKET = "listing-images";
+export const BUCKET = "listing-images";
 
-function getClient() {
+/**
+ * Fail-closed: throws immediately if Supabase env vars are missing.
+ * Never silently continues without credentials.
+ */
+function getClient(): SupabaseClient {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set");
+
+  if (!url || url === "PASTE_SUPABASE_URL") {
+    throw new Error("[supabase] SUPABASE_URL is missing or still a placeholder — refusing to continue");
   }
+  if (!key || key === "PASTE_SERVICE_ROLE_KEY") {
+    throw new Error("[supabase] SUPABASE_SERVICE_ROLE_KEY is missing or still a placeholder — refusing to continue");
+  }
+
   return createClient(url, key);
+}
+
+/**
+ * Check Supabase connectivity and listing-images bucket.
+ * Used by /api/health and /api/storage/check.
+ */
+export async function checkBucket(): Promise<{ ok: boolean; detail?: string }> {
+  try {
+    const supabase = getClient();
+    const { data, error } = await supabase.storage.getBucket(BUCKET);
+    if (error) {
+      return { ok: false, detail: `Bucket "${BUCKET}": ${error.message}` };
+    }
+    return { ok: true, detail: `Bucket "${data.name}" exists (public: ${data.public})` };
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message : "Unknown error" };
+  }
 }
 
 /**

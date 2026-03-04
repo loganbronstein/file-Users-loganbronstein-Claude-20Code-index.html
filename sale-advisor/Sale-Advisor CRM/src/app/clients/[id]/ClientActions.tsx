@@ -9,6 +9,32 @@ interface Props {
   clientName: string;
 }
 
+export function InventoryActions({ itemId }: { itemId: string }) {
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  async function createListing() {
+    setLoading(true);
+    const res = await fetch(`/api/inventory/${itemId}/create-listing`, { method: "POST" });
+    if (res.ok) {
+      const listing = await res.json();
+      toast("Draft listing created");
+      router.push(`/listings/${listing.id}`);
+    } else {
+      const err = await res.json();
+      toast(err.errors?.[0] || "Failed", "error");
+    }
+    setLoading(false);
+  }
+
+  return (
+    <button className="btn btn-primary" style={{ fontSize: 11, padding: "4px 10px" }} onClick={createListing} disabled={loading}>
+      {loading ? "..." : "Create Listing"}
+    </button>
+  );
+}
+
 export function ScheduleDeliveryForm({ clientId, clientName }: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);

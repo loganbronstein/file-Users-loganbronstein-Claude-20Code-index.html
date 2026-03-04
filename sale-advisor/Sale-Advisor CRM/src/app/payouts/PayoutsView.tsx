@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
+import CreatePayoutModal from "@/components/CreatePayoutModal";
 
 interface Payout {
   id: string;
@@ -19,13 +20,20 @@ interface Payout {
   client: { id: string; name: string };
 }
 
+interface ClientOption {
+  id: string;
+  name: string;
+}
+
 function fmt(cents: number) {
   return "$" + (cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 });
 }
 
-export default function PayoutsView({ payouts }: { payouts: Payout[] }) {
+export default function PayoutsView({ payouts, clients }: { payouts: Payout[]; clients: ClientOption[] }) {
   const [filter, setFilter] = useState("ALL");
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -41,6 +49,7 @@ export default function PayoutsView({ payouts }: { payouts: Payout[] }) {
 
     if (res.ok) {
       toast("Payout marked as paid");
+      setConfirmId(null);
       router.refresh();
     } else {
       toast("Failed to update payout", "error");
@@ -50,17 +59,23 @@ export default function PayoutsView({ payouts }: { payouts: Payout[] }) {
 
   return (
     <>
-      <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-        {["ALL", "PENDING", "PROCESSING", "PAID"].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`btn ${filter === s ? "btn-primary" : "btn-secondary"}`}
-            style={{ fontSize: 12, padding: "6px 12px" }}
-          >
-            {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
-          </button>
-        ))}
+      {/* Filter tabs + Create button */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          {["ALL", "PENDING", "PROCESSING", "PAID", "FAILED"].map((s) => (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              className={`btn ${filter === s ? "btn-primary" : "btn-secondary"}`}
+              style={{ fontSize: 12, padding: "6px 12px" }}
+            >
+              {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </div>
+        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          + Create Payout
+        </button>
       </div>
 
       <div className="card">
@@ -97,24 +112,43 @@ export default function PayoutsView({ payouts }: { payouts: Payout[] }) {
                     <td style={{ padding: "12px 16px" }}>
                       <span style={{
                         fontSize: 11, padding: "3px 8px", borderRadius: 6,
-                        background: p.status === "PAID" ? "var(--green-bg)" : "var(--yellow-bg)",
-                        color: p.status === "PAID" ? "var(--green)" : "var(--yellow)",
+                        background: p.status === "PAID" ? "var(--green-bg)" : p.status === "FAILED" ? "var(--red-bg)" : "var(--yellow-bg)",
+                        color: p.status === "PAID" ? "var(--green)" : p.status === "FAILED" ? "var(--red)" : "var(--yellow)",
                       }}>
                         {p.status}
                       </span>
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      {p.status !== "PAID" && (
+                      {p.status !== "PAID" && confirmId !== p.id && (
                         <button
                           className="btn btn-primary"
                           style={{ fontSize: 11, padding: "4px 10px" }}
-                          onClick={() => markPaid(p.id)}
+                          onClick={() => setConfirmId(p.id)}
                           disabled={loadingId === p.id}
                         >
-                          {loadingId === p.id ? "..." : "Mark Paid"}
+                          Mark Paid
                         </button>
                       )}
-                      {p.paidAt && (
+                      {confirmId === p.id && (
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button
+                            className="btn btn-primary"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => markPaid(p.id)}
+                            disabled={loadingId === p.id}
+                          >
+                            {loadingId === p.id ? "..." : "Confirm"}
+                          </button>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => setConfirmId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                      {p.paidAt && p.status === "PAID" && (
                         <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
                           {new Date(p.paidAt).toLocaleDateString()}
                         </span>
@@ -127,6 +161,8 @@ export default function PayoutsView({ payouts }: { payouts: Payout[] }) {
           </table>
         </div>
       </div>
+
+      {showModal && <CreatePayoutModal clients={clients} onClose={() => setShowModal(false)} />}
     </>
   );
 }

@@ -171,6 +171,10 @@ model Client {
   stage          ClientStage   @default(WALKTHROUGH_SCHEDULED)
   notes          String?
 
+  walkthroughDate    DateTime?
+  walkthroughAddress String?
+  walkthroughNotes   String?
+
   archivedAt     DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

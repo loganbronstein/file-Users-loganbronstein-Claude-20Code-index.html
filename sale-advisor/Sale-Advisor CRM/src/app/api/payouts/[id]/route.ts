@@ -9,6 +9,7 @@ import {
   PAYOUT_STATUSES,
   PAYOUT_TRANSITIONS,
 } from "@/lib/validation";
+import { notifyPayoutPaid } from "@/lib/notify";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -41,7 +42,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const payout = await prisma.payout.update({
     where: { id },
     data,
+    include: { client: { select: { name: true } } },
   });
+
+  // Notify admin on PAID
+  if (data.status === "PAID") {
+    notifyPayoutPaid(payout.client.name, existing.payoutCents).catch(() => {});
+  }
 
   // Log payment
   if (data.status === "PAID") {

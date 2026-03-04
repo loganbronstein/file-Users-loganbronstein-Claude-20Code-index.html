@@ -45,6 +45,7 @@ export const LEAD_PATCH_FIELDS = [
 
 export const CLIENT_PATCH_FIELDS = [
   "name", "email", "phone", "neighborhood", "stage", "notes",
+  "walkthroughDate", "walkthroughAddress", "walkthroughNotes",
 ] as const;
 
 export const DELIVERY_PATCH_FIELDS = [

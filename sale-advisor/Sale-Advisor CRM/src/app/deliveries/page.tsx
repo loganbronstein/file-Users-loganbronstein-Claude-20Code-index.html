@@ -1,11 +1,16 @@
-import DeliveryTracker from "@/components/DeliveryTracker";
-import { getDeliveries } from "@/lib/queries";
+import DeliveriesView from "./DeliveriesView";
+import { getDeliveries, getClientsForDropdown } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function DeliveriesPage() {
-  const deliveries = await getDeliveries();
-  const serialized = JSON.parse(JSON.stringify(deliveries));
+  const [deliveries, clients] = await Promise.all([
+    getDeliveries(),
+    getClientsForDropdown(),
+  ]);
+
+  const serializedDeliveries = JSON.parse(JSON.stringify(deliveries));
+  const serializedClients = JSON.parse(JSON.stringify(clients));
 
   return (
     <>
@@ -15,7 +20,7 @@ export default async function DeliveriesPage() {
           <div className="header-subtitle">{deliveries.length} delivery{deliveries.length !== 1 ? "ies" : ""}</div>
         </div>
       </div>
-      <DeliveryTracker deliveries={serialized} />
+      <DeliveriesView deliveries={serializedDeliveries} clients={serializedClients} />
     </>
   );
 }

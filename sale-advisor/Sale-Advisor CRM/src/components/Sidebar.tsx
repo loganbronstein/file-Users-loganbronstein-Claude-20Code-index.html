@@ -19,8 +19,12 @@ const navItems = {
   ],
   Operations: [
     { icon: "📅", label: "Walkthroughs", href: "/walkthroughs" },
+    { icon: "📋", label: "Inventory", href: "/inventory" },
     { icon: "🚚", label: "Deliveries", href: "/deliveries" },
     { icon: "💰", label: "Payouts", href: "/payouts" },
+  ],
+  System: [
+    { icon: "🖥️", label: "System Monitor", href: "/admin/system" },
   ],
 };
 

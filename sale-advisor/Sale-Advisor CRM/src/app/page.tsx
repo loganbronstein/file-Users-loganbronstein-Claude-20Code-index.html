@@ -7,6 +7,7 @@ import ActivityFeed from "@/components/ActivityFeed";
 import AdPerformance from "@/components/AdPerformance";
 import DashboardHeader from "@/components/DashboardHeader";
 import DashboardSummary from "@/components/DashboardSummary";
+import TodayWalkthroughs from "@/components/TodayWalkthroughs";
 import {
   getStats,
   getLeadsByStage,
@@ -16,12 +17,13 @@ import {
   getDeliveries,
   getRecentActivity,
   getDashboardSummary,
+  getTodayWalkthroughs,
 } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [stats, leads, clients, messages, sources, deliveries, activities, summary] =
+  const [stats, leads, clients, messages, sources, deliveries, activities, summary, todayWalkthroughs] =
     await Promise.all([
       getStats(),
       getLeadsByStage(),
@@ -31,14 +33,16 @@ export default async function DashboardPage() {
       getDeliveries(),
       getRecentActivity(),
       getDashboardSummary(),
+      getTodayWalkthroughs(),
     ]);
 
-  const s = JSON.parse(JSON.stringify({ messages, deliveries, activities, leads, clients }));
+  const s = JSON.parse(JSON.stringify({ messages, deliveries, activities, leads, clients, todayWalkthroughs }));
 
   return (
     <>
       <DashboardHeader />
       <DashboardSummary data={summary} />
+      <TodayWalkthroughs walkthroughs={s.todayWalkthroughs} />
       <StatsGrid data={stats} />
 
       <div className="content-grid">

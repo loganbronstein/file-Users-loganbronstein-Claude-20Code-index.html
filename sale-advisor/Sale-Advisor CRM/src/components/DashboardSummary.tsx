@@ -7,12 +7,14 @@ interface Props {
     upcomingDeliveries: number;
     pendingPayouts: number;
     draftListings: number;
+    upcomingWalkthroughs: number;
   };
 }
 
 const cards = [
   { key: "todayLeads" as const, label: "New Leads Today", href: "/leads", color: "var(--blue)", bg: "var(--blue-bg)", icon: "🎯" },
   { key: "unreadMessages" as const, label: "Unread Messages", href: "/messages", color: "var(--accent)", bg: "var(--accent-glow)", icon: "💬" },
+  { key: "upcomingWalkthroughs" as const, label: "Upcoming Walkthroughs", href: "/walkthroughs", color: "var(--purple, var(--accent))", bg: "var(--purple-bg, var(--accent-glow))", icon: "📅" },
   { key: "draftListings" as const, label: "Draft Listings", href: "/listings?tab=DRAFTS", color: "var(--yellow)", bg: "var(--yellow-bg)", icon: "📦" },
   { key: "upcomingDeliveries" as const, label: "Upcoming Deliveries", href: "/deliveries", color: "var(--yellow)", bg: "var(--yellow-bg)", icon: "🚚" },
   { key: "pendingPayouts" as const, label: "Pending Payouts", href: "/payouts", color: "var(--green)", bg: "var(--green-bg)", icon: "💰" },
@@ -20,7 +22,7 @@ const cards = [
 
 export default function DashboardSummary({ data }: Props) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16, marginBottom: 24 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 16, marginBottom: 24 }}>
       {cards.map((card) => {
         const count = data[card.key];
         return (

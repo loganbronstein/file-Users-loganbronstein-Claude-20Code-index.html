@@ -9,6 +9,7 @@ import {
   DELIVERY_STATUSES,
   DELIVERY_TRANSITIONS,
 } from "@/lib/validation";
+import { notifyDeliveryStatus } from "@/lib/notify";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -50,7 +51,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const delivery = await prisma.delivery.update({
     where: { id },
     data,
+    include: { client: { select: { name: true } } },
   });
+
+  // Notify admin on status change
+  if (data.status && data.status !== existing.status) {
+    notifyDeliveryStatus(delivery.client.name, existing.description, data.status as string).catch(() => {});
+  }
 
   // Log completion
   if (data.status === "DELIVERED") {

@@ -69,8 +69,12 @@ function LoginForm() {
 
       {authError && (
         <div className="form-error" style={{ marginBottom: 16 }}>
-          {authError === "AccessDenied"
-            ? "Access denied. Only @saleadvisor.com accounts can sign in."
+          {authError === "Denied"
+            ? "This account is not permitted to access the CRM."
+            : authError === "WrongDomain"
+            ? "Use your @saleadvisor.com Google account."
+            : authError === "AccessDenied"
+            ? "Access denied. Only authorized @saleadvisor.com accounts can sign in."
             : authError === "OAuthAccountNotLinked"
             ? "This email is already linked to another sign-in method."
             : "Something went wrong. Try again."}

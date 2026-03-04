@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
+import ScheduleWalkthroughModal from "@/components/ScheduleWalkthroughModal";
 
 interface Lead {
   id: string;
@@ -35,6 +36,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState(false);
   const [startingConvo, setStartingConvo] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
 
   const [name, setName] = useState(lead.name);
   const [phone, setPhone] = useState(lead.phone || "");
@@ -129,6 +131,11 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           <button className="btn btn-secondary" onClick={startConversation} disabled={startingConvo} style={{ fontSize: 13 }}>
             {lead.conversations.length > 0 ? "Open Messages" : "Start Conversation"}
           </button>
+          {!lead.client && (
+            <button className="btn btn-secondary" onClick={() => setShowSchedule(true)} style={{ fontSize: 13 }}>
+              Schedule Walkthrough
+            </button>
+          )}
           {!lead.client ? (
             <button className="btn btn-primary" onClick={convertToClient} disabled={converting} style={{ fontSize: 13 }}>
               {converting ? "Converting..." : "Convert to Client"}
@@ -187,6 +194,14 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           </button>
         </div>
       </div>
+
+      {showSchedule && (
+        <ScheduleWalkthroughModal
+          leadId={lead.id}
+          leadName={lead.name}
+          onClose={() => setShowSchedule(false)}
+        />
+      )}
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getClientById } from "@/lib/queries";
 import Link from "next/link";
-import { ScheduleDeliveryForm, CreatePayoutForm } from "./ClientActions";
+import { ScheduleDeliveryForm, CreatePayoutForm, InventoryActions } from "./ClientActions";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +95,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           <div style={{ padding: 8 }}>
             {client.inventory.map((item) => {
               const sc = invStatusColors[item.status] || invStatusColors.PENDING_PICKUP;
+              const inv = item as typeof item & { listing?: { id: string; status: string } | null };
               return (
                 <div key={item.id} className="message-item" style={{ alignItems: "center" }}>
                   <div style={{ flex: 1 }}>
@@ -103,15 +104,22 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                       {[item.category, item.condition, item.marketplace].filter(Boolean).join(" · ") || "No details"}
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span className="ad-status" style={{ background: sc.bg, color: sc.color }}>
                       {item.status.replace(/_/g, " ")}
                     </span>
                     {item.listPriceCents && (
-                      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
-                        Listed: {fmt(item.listPriceCents)}
-                      </div>
+                      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                        {fmt(item.listPriceCents)}
+                      </span>
                     )}
+                    {inv.listing ? (
+                      <Link href={`/listings/${inv.listing.id}`} style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none" }}>
+                        View Listing
+                      </Link>
+                    ) : item.status === "IN_POSSESSION" ? (
+                      <InventoryActions itemId={item.id} />
+                    ) : null}
                   </div>
                 </div>
               );

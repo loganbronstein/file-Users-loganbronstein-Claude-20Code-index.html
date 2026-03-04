@@ -38,3 +38,18 @@ export async function notifyInboundSms(name: string | null, phone: string, previ
   const short = preview.length > 60 ? preview.slice(0, 57) + "..." : preview;
   await notifyAdmin(`SMS from ${who}: "${short}" – Open CRM > Messages.`);
 }
+
+/**
+ * Notify admin of a delivery status change.
+ */
+export async function notifyDeliveryStatus(clientName: string, description: string, status: string): Promise<void> {
+  await notifyAdmin(`Delivery update: ${description} for ${clientName} is now ${status.toLowerCase().replace(/_/g, " ")}.`);
+}
+
+/**
+ * Notify admin of a completed payout.
+ */
+export async function notifyPayoutPaid(clientName: string, amountCents: number): Promise<void> {
+  const amount = (amountCents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 });
+  await notifyAdmin(`Payout complete: ${clientName} was paid $${amount}.`);
+}

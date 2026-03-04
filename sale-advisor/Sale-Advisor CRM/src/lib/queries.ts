@@ -175,7 +175,10 @@ export async function getClientById(id: string) {
     where: { id },
     include: {
       lead: true,
-      inventory: { orderBy: { createdAt: "desc" } },
+      inventory: {
+        orderBy: { createdAt: "desc" },
+        include: { listing: { select: { id: true, status: true } } },
+      },
       messages: { orderBy: { createdAt: "desc" }, take: 50 },
       deliveries: { orderBy: { scheduledAt: "desc" } },
       payouts: { orderBy: { createdAt: "desc" } },
@@ -254,7 +257,10 @@ export async function getMessagesForThread(leadId?: string, clientId?: string) {
 export async function getAllInventory() {
   return prisma.inventoryItem.findMany({
     orderBy: { createdAt: "desc" },
-    include: { client: { select: { id: true, name: true } } },
+    include: {
+      client: { select: { id: true, name: true } },
+      listing: { select: { id: true, status: true } },
+    },
   });
 }
 
@@ -294,7 +300,7 @@ export async function getDashboardSummary() {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const [todayLeads, unreadMessages, upcomingDeliveries, pendingPayouts, draftListings] = await Promise.all([
+  const [todayLeads, unreadMessages, upcomingDeliveries, pendingPayouts, draftListings, upcomingWalkthroughs] = await Promise.all([
     prisma.lead.count({
       where: { createdAt: { gte: todayStart }, archivedAt: null },
     }),
@@ -310,9 +316,12 @@ export async function getDashboardSummary() {
     prisma.listing.count({
       where: { status: { in: ["DRAFT", "NEEDS_REVIEW"] } },
     }),
+    prisma.client.count({
+      where: { stage: "WALKTHROUGH_SCHEDULED", walkthroughDate: { gte: new Date() }, archivedAt: null },
+    }),
   ]);
 
-  return { todayLeads, unreadMessages, upcomingDeliveries, pendingPayouts, draftListings };
+  return { todayLeads, unreadMessages, upcomingDeliveries, pendingPayouts, draftListings, upcomingWalkthroughs };
 }
 
 export async function getAllListings(status?: ListingStatus) {
@@ -356,7 +365,6 @@ export async function getListingAudits(listingId: string) {
 }
 
 export async function getWalkthroughs() {
-  // Leads at WALKTHROUGH_BOOKED stage + clients at WALKTHROUGH_SCHEDULED/COMPLETED
   const [bookedLeads, walkthroughClients] = await Promise.all([
     prisma.lead.findMany({
       where: { stage: "WALKTHROUGH_BOOKED", archivedAt: null },
@@ -364,10 +372,46 @@ export async function getWalkthroughs() {
     }),
     prisma.client.findMany({
       where: { stage: { in: ["WALKTHROUGH_SCHEDULED", "WALKTHROUGH_COMPLETED"] }, archivedAt: null },
-      orderBy: { updatedAt: "desc" },
-      include: { lead: { select: { phone: true, email: true } } },
+      orderBy: [{ walkthroughDate: { sort: "asc", nulls: "last" } }, { updatedAt: "desc" }],
+      include: {
+        lead: { select: { phone: true, email: true } },
+        _count: { select: { inventory: true } },
+      },
     }),
   ]);
 
   return { bookedLeads, walkthroughClients };
+}
+
+export async function getTodayWalkthroughs() {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  return prisma.client.findMany({
+    where: {
+      walkthroughDate: { gte: todayStart, lte: todayEnd },
+      stage: "WALKTHROUGH_SCHEDULED",
+      archivedAt: null,
+    },
+    orderBy: { walkthroughDate: "asc" },
+    include: { lead: { select: { phone: true } } },
+  });
+}
+
+export async function getClientsForDropdown() {
+  return prisma.client.findMany({
+    where: { archivedAt: null },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getLeadsForDropdown() {
+  return prisma.lead.findMany({
+    where: { archivedAt: null, convertedAt: null },
+    select: { id: true, name: true, neighborhood: true, phone: true },
+    orderBy: { createdAt: "desc" },
+  });
 }
